@@ -8,12 +8,29 @@
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",
     "build": "cd client && npm run build",
-    "install-all": "npm install && cd server && npm install && cd ../client && npm install"
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "lint": "eslint --config .eslintrc.json tests/ jest.config.js",
+    "test": "jest --coverage"
   },
-  "keywords": ["food-delivery", "gamification", "social-impact", "react", "nodejs"],
+  "keywords": [
+    "food-delivery",
+    "gamification",
+    "social-impact",
+    "react",
+    "nodejs"
+  ],
   "author": "Hungry Wolf Team",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }
