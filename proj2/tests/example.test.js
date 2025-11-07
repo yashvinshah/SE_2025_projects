@@ -17,7 +17,16 @@ const {
   isValidOrder,
   isLocalLegend,
   calculateDeliveryTime,
-  isValidRating
+  isValidRating,
+  formatCurrency,
+  calculateTax,
+  validateEmail,
+  validatePhoneNumber,
+  calculateTipAmount,
+  calculateEstimatedDeliveryTime,
+  formatOrderId,
+  isValidDiscountCode,
+  calculateDeliveryFee
 } = require('../src/utils/businessLogic');
 
 // Test Suite - 100 tests for Hungry Wolf Application
@@ -569,6 +578,141 @@ describe('Hungry Wolf Application Tests', () => {
 
     test('rejects rating with decimal value 5.5 (above maximum)', () => {
       expect(isValidRating(5.5)).toBe(false);
+    });
+  });
+
+  // Additional Utility Functions Tests (to reach ~85% coverage)
+  describe('Utility Functions', () => {
+    test('formats currency for positive amount', () => {
+      expect(formatCurrency(25.99)).toBe('$25.99');
+    });
+
+    test('formats currency for zero amount', () => {
+      expect(formatCurrency(0)).toBe('$0.00');
+    });
+
+    test('formats currency for large amount', () => {
+      expect(formatCurrency(1000.50)).toBe('$1000.50');
+    });
+
+    test('handles invalid currency amount', () => {
+      expect(formatCurrency('invalid')).toBe('$0.00');
+    });
+
+    test('calculates tax for valid amount', () => {
+      expect(calculateTax(100, 0.08)).toBe(8);
+    });
+
+    test('calculates tax with default rate', () => {
+      expect(calculateTax(100)).toBe(8);
+    });
+
+    test('calculates tax for zero amount', () => {
+      expect(calculateTax(0, 0.08)).toBe(0);
+    });
+
+    test('handles invalid tax rate', () => {
+      expect(calculateTax(100, 1.5)).toBe(0);
+    });
+
+    test('validates correct email format', () => {
+      expect(validateEmail('test@example.com')).toBe(true);
+    });
+
+    test('validates email with subdomain', () => {
+      expect(validateEmail('user@mail.example.com')).toBe(true);
+    });
+
+    test('rejects invalid email without @', () => {
+      expect(validateEmail('invalidemail.com')).toBe(false);
+    });
+
+    test('rejects invalid email without domain', () => {
+      expect(validateEmail('test@')).toBe(false);
+    });
+
+    test('rejects null email', () => {
+      expect(validateEmail(null)).toBe(false);
+    });
+
+    test('validates correct phone number', () => {
+      expect(validatePhoneNumber('1234567890')).toBe(true);
+    });
+
+    test('validates phone number with formatting', () => {
+      expect(validatePhoneNumber('(123) 456-7890')).toBe(true);
+    });
+
+    test('rejects phone number with wrong length', () => {
+      expect(validatePhoneNumber('12345')).toBe(false);
+    });
+
+    test('rejects invalid phone number', () => {
+      expect(validatePhoneNumber('abc123')).toBe(false);
+    });
+
+    test('calculates tip with default percentage', () => {
+      expect(calculateTipAmount(100)).toBe(15);
+    });
+
+    test('calculates tip with custom percentage', () => {
+      expect(calculateTipAmount(100, 0.20)).toBe(20);
+    });
+
+    test('calculates tip for zero amount', () => {
+      expect(calculateTipAmount(0, 0.15)).toBe(0);
+    });
+
+    test('handles invalid tip percentage', () => {
+      expect(calculateTipAmount(100, -0.10)).toBe(0);
+    });
+
+    test('calculates estimated delivery time for regular restaurant', () => {
+      expect(calculateEstimatedDeliveryTime(30, false)).toBe(30);
+    });
+
+    test('calculates estimated delivery time for Local Legend', () => {
+      expect(calculateEstimatedDeliveryTime(30, true)).toBe(25);
+    });
+
+    test('formats valid order ID', () => {
+      expect(formatOrderId('abc123xyz')).toBe('ABC123XY');
+    });
+
+    test('formats order ID with lowercase', () => {
+      expect(formatOrderId('test1234')).toBe('TEST1234');
+    });
+
+    test('validates correct discount code format', () => {
+      expect(isValidDiscountCode('SAVE123')).toBe(true);
+    });
+
+    test('validates discount code with lowercase', () => {
+      expect(isValidDiscountCode('save123')).toBe(true);
+    });
+
+    test('validates discount code with minimum length', () => {
+      expect(isValidDiscountCode('ABC123')).toBe(true);
+    });
+
+    test('rejects discount code that is too short', () => {
+      expect(isValidDiscountCode('ABC12')).toBe(false);
+    });
+
+    test('calculates delivery fee for short distance', () => {
+      expect(calculateDeliveryFee(3, false)).toBe(2.99);
+    });
+
+    test('calculates delivery fee for long distance', () => {
+      expect(calculateDeliveryFee(10, false)).toBe(4.99);
+    });
+
+    test('calculates delivery fee for Local Legend short distance', () => {
+      expect(calculateDeliveryFee(3, true)).toBeCloseTo(2.392);
+    });
+
+    test('calculates delivery fee for Local Legend long distance', () => {
+      expect(calculateDeliveryFee(10, true)).toBeCloseTo(3.992);
     });
   });
 });

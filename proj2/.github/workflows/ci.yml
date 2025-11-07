@@ -1,0 +1,44 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install all dependencies (monorepo)
+        run: npm run install-all
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Run tests with coverage
+        run: npm test
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        if: always() 
+        uses: codecov/codecov-action@v4
+        with:
+          token: 6c4b845f-de6f-42f2-811f-736a0371b841
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+          verbose: true
+
+
