@@ -1,5 +1,5 @@
 <!-- CI/CD and quality badges -->
-[![Build Status](https://github.com/yashvinshah/SE_2025_projects/proj2/actions/workflows/ci.yml/badge.svg)](https://github.com/yashvinshah/SE_2025_projects/proj2/actions/workflows/ci.yml)
+[![Build Status](https://github.com/yashvinshah/SE_2025_projects/actions/workflows/ci.yml/badge.svg)](https://github.com/yashvinshah/SE_2025_projects/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/github/yashvinshah/SE_2025_projects/graph/badge.svg?token=4FG9EPMKX0)](https://codecov.io/github/yashvinshah/SE_2025_projects)
 [![ESLint](https://img.shields.io/badge/code_style-ESLint-blue.svg)](https://eslint.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](docs/LICENSE.md)

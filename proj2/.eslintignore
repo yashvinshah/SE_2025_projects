@@ -1,0 +1,9 @@
+node_modules/
+client/
+server/
+coverage/
+*.min.js
+build/
+dist/
+.env
+.env.local
