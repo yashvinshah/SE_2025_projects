@@ -131,6 +131,11 @@ This project follows software sustainability principles:
 
 MIT License - see LICENSE file for details
 
+### 🔗 Live Demo
+You can see the working demo using the link below:  
+[View Live Demo](https://drive.google.com/file/d/1R85vYgjbKL3zBZsimE7ruI46UfgAdN8x/view?usp=drive_link)
+
+
 ---
 
 This repository uses continuous integration (GitHub Actions), linting (ESLint), automated testing (Jest), and coverage tracking (Codecov). All badges above are live and auto-updated on each commit.
