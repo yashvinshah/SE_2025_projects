@@ -44,7 +44,7 @@ This guide will help you set up the Hungry Wolf application for development and 
 
 6. **Access the application**
    - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+   - Backend API: http://localhost:5001
 
 ## Environment Configuration
 
@@ -63,7 +63,7 @@ FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
 FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
 
 # Server Configuration
-PORT=5000
+PORT=5001
 NODE_ENV=development
 
 # CORS Configuration
@@ -75,7 +75,7 @@ CLIENT_URL=http://localhost:3000
 Create `client/.env` with:
 
 ```env
-REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_API_URL=http://localhost:5001/api
 ```
 
 ## Firebase Setup

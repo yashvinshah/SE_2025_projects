@@ -4,7 +4,7 @@ This document describes the REST API endpoints for the Hungry Wolf application.
 
 ## Base URL
 
-- Development: `http://localhost:5000/api`
+- Development: `http://localhost:5001/api`
 - Production: `https://your-domain.com/api`
 
 ## Endpoints
