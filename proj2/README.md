@@ -39,6 +39,12 @@ hungry-wolf/
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:5000
 
+4. **Test & Coverage**
+   ```bash
+   npm run test
+   ```
+
+
 ## 📋 Milestones
 
 ### Milestone 1: Onboarding ✅
