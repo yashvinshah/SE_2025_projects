@@ -96,7 +96,8 @@ const Cart: React.FC = () => {
         groups[item.restaurantId].items.push({
           menuItemId: item.id,
           quantity: item.quantity,
-          price: item.price
+          price: item.price,
+          name: item.name,
         });
         return groups;
       }, {});

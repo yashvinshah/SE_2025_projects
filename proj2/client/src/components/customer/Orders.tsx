@@ -1,18 +1,20 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import { api } from '../../services/api';
 import './Orders.css';
 
 const Orders: React.FC = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { addItem } = useCart();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingOrder, setRatingOrder] = useState<any>(null);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
-  
+
   const { data: orders, isLoading } = useQuery({
     queryKey: ['customerOrders', user?.id],
     queryFn: async () => {
@@ -69,6 +71,20 @@ const Orders: React.FC = () => {
     setSelectedOrder(null);
   };
 
+  const handleReorder = async (order: any) => {
+    if (!user) return;
+    console.log(order)
+    order.items.forEach((item: any) => {
+      addItem({
+        id: item.menuItemId,
+        name: item.name,
+        price: item.price,
+        restaurantId: order.restaurantId,
+        restaurantName: order.restaurantName
+      });
+    });
+  };
+
   const handleRateOrder = (order: any) => {
     setRatingOrder(order);
     setShowRatingModal(true);
@@ -114,12 +130,20 @@ const Orders: React.FC = () => {
                   <p><strong>Ordered:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="order-actions">
-                  <button 
-                    className="btn btn-secondary"
-                    onClick={() => handleViewDetails(order)}
-                  >
-                    View Details
-                  </button>
+                  <div className="order-actions">
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => handleViewDetails(order)}
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => handleReorder(order)}
+                    >
+                      Reorder
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -154,8 +178,14 @@ const Orders: React.FC = () => {
                   )}
                 </div>
                 <div className="order-actions">
+                   <button 
+                      className="btn btn-primary" 
+                      onClick={() => handleReorder(order)}
+                    >
+                      Reorder
+                    </button>
                   <button 
-                    className="btn btn-secondary"
+                    className="btn btn-primary" 
                     onClick={() => handleViewDetails(order)}
                   >
                     View Details
