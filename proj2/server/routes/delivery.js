@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { db } = require('../config/firebase');
 const User = require('../models/User');
 const { awardPointsForOrder } = require('./points');
+const { updateCustomerBadges } = require('../services/badgeService');
 
 const router = express.Router();
 
@@ -224,6 +225,13 @@ router.post('/deliver/:orderId', async (req, res) => {
 
     // Award points to customer
     await awardPointsForOrder(orderData.customerId, orderData.totalAmount);
+
+    // Refresh customer badges based on updated order history
+    try {
+      await updateCustomerBadges(orderData.customerId);
+    } catch (badgeError) {
+      console.error('Failed to update customer badges:', badgeError);
+    }
 
     // Check if rider has other active orders before setting to free
     const rider = await User.findById(riderId);

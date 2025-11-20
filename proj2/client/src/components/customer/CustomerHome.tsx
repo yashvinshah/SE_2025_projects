@@ -1,7 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import CustomerBadges from './CustomerBadges';
 import './CustomerHome.css';
 
 const CustomerHome: React.FC = () => {
@@ -23,6 +24,7 @@ const CustomerHome: React.FC = () => {
 
   return (
     <div className="customer-home">
+      <CustomerBadges />
       <div className="quick-actions">
         <Link to="/customer/restaurants" className="action-card">
           <div className="action-icon">🍽️</div>
@@ -42,7 +44,7 @@ const CustomerHome: React.FC = () => {
           <p>Track your past orders</p>
         </Link>
       </div>
-
+      
       <div className="featured-restaurants">
         <h2>Featured Restaurants</h2>
         <div className="restaurants-grid">
