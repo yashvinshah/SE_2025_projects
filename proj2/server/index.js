@@ -11,6 +11,9 @@ const deliveryRoutes = require('./routes/delivery');
 const orderRoutes = require('./routes/orders');
 const { router: pointsRoutes, awardPointsForOrder } = require('./routes/points');
 const donationRoutes = require('./routes/donations');
+const wishlistRoutes = require('./routes/wishlist');
+const subscriptionRoutes = require('./routes/subscriptions');
+const promoRoutes = require('./routes/promos');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +36,9 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/donations', donationRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/promos', promoRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
