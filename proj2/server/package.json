@@ -22,7 +22,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
-    "jest": "^29.6.2"
+    "jest": "^29.6.2",
+    "supertest": "^6.3.3"
   },
   "keywords": ["food", "delivery", "express", "firebase"],
   "author": "SE Group 15",
