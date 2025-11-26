@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
+import { wishlistApi } from '../../services/wishlist-api';
 import './RestaurantList.css';
 
 const RestaurantList: React.FC = () => {
   const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
   const [searchParams] = useSearchParams();
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: restaurants, isLoading } = useQuery({
     queryKey: ['restaurants'],
@@ -16,6 +20,18 @@ const RestaurantList: React.FC = () => {
       const response = await api.get('/customer/restaurants');
       return response.data.restaurants;
     },
+  });
+
+  // Add to wishlist mutation
+  const addToWishlistMutation = useMutation({
+    mutationFn: (item: any) => wishlistApi.addItem(user!.id, item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist', user?.id] });
+      alert('Added to wishlist! ❤️');
+    },
+    onError: () => {
+      alert('Failed to add to wishlist. Please try again.');
+    }
   });
 
   // Handle restaurant parameter from URL
@@ -36,6 +52,32 @@ const RestaurantList: React.FC = () => {
       price: menuItem.price,
       restaurantId: selectedRestaurant.id,
       restaurantName: selectedRestaurant.name
+    });
+  };
+
+  const handleAddRestaurantToWishlist = (restaurant: any) => {
+    addToWishlistMutation.mutate({
+      type: 'restaurant',
+      itemId: restaurant.id,
+      name: restaurant.name,
+      details: {
+        cuisine: restaurant.cuisine,
+        rating: restaurant.rating,
+        description: restaurant.description
+      }
+    });
+  };
+
+  const handleAddMenuItemToWishlist = (menuItem: any) => {
+    addToWishlistMutation.mutate({
+      type: 'menuItem',
+      itemId: menuItem.id,
+      name: menuItem.name,
+      details: {
+        price: menuItem.price,
+        description: menuItem.description,
+        restaurantName: selectedRestaurant.name
+      }
     });
   };
 
@@ -70,12 +112,22 @@ const RestaurantList: React.FC = () => {
               <p className="restaurant-description">
                 {restaurant.description || 'Delicious food awaits you!'}
               </p>
-              <button 
-                onClick={() => setSelectedRestaurant(restaurant)}
-                className="btn btn-primary"
-              >
-                View Menu
-              </button>
+              <div className="restaurant-actions">
+                <button 
+                  onClick={() => setSelectedRestaurant(restaurant)}
+                  className="btn btn-primary"
+                >
+                  View Menu
+                </button>
+                <button 
+                  onClick={() => handleAddRestaurantToWishlist(restaurant)}
+                  className="btn btn-wishlist"
+                  title="Add to wishlist"
+                  disabled={addToWishlistMutation.isPending}
+                >
+                  ❤️
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -102,12 +154,22 @@ const RestaurantList: React.FC = () => {
                   <p>{item.description}</p>
                   <span className="price">${item.price}</span>
                 </div>
-                <button 
-                  onClick={() => handleAddToCart(item)}
-                  className="btn btn-primary"
-                >
-                  Add to Cart
-                </button>
+                <div className="menu-item-actions">
+                  <button 
+                    onClick={() => handleAddToCart(item)}
+                    className="btn btn-primary"
+                  >
+                    Add to Cart
+                  </button>
+                  <button 
+                    onClick={() => handleAddMenuItemToWishlist(item)}
+                    className="btn btn-wishlist"
+                    title="Add to wishlist"
+                    disabled={addToWishlistMutation.isPending}
+                  >
+                    ❤️
+                  </button>
+                </div>
               </div>
             ))}
           </div>

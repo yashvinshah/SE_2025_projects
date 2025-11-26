@@ -7,6 +7,7 @@ import RestaurantHome from '../components/restaurant/RestaurantHome';
 import OrderManagement from '../components/restaurant/OrderManagement';
 import MenuManagement from '../components/restaurant/MenuManagement';
 import Profile from '../components/restaurant/Profile';
+import PromoManagement from '../components/restaurant/PromoManagement';
 import './Dashboard.css';
 
 const RestaurantDashboard: React.FC = () => {
@@ -51,6 +52,7 @@ const RestaurantDashboard: React.FC = () => {
           <Route path="/" element={<RestaurantHome />} />
           <Route path="/orders" element={<OrderManagement />} />
           <Route path="/menu" element={<MenuManagement />} />
+          <Route path="/promos" element={<PromoManagement />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>

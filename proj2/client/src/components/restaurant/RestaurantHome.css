@@ -28,6 +28,48 @@
   margin-bottom: 40px;
 }
 
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.action-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.action-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.action-card h3 {
+  font-size: 1.3rem;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+}
+
+.action-card p {
+  color: #666;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
 .pending-orders h3 {
   font-size: 1.5rem;
   margin-bottom: 20px;
