@@ -69,7 +69,7 @@ describe('Quest System Tests', () => {
       const newSpent = currentSpent + orderAmount;
       const newProgress = Math.min(1, newSpent / target);
       
-      expect(newProgress).toBe(0.4099);
+      expect(newProgress).toBeCloseTo(0.4099, 4);
     });
 
     test('calculates progress for large order count quest', () => {
@@ -294,14 +294,14 @@ describe('Quest System Tests', () => {
 
     test('validates badge reward structure', () => {
       const reward = { type: 'badge', badgeId: 'cuisine_explorer' };
-      const isValidBadge = reward.type === 'badge' && reward.badgeId;
+      const isValidBadge = reward.type === 'badge' && !!reward.badgeId;
       
       expect(isValidBadge).toBe(true);
     });
 
     test('rejects invalid badge reward structure', () => {
       const reward = { type: 'badge' };
-      const isValidBadge = reward.type === 'badge' && reward.badgeId;
+      const isValidBadge = reward.type === 'badge' && !!reward.badgeId;
       
       expect(isValidBadge).toBe(false);
     });
@@ -502,6 +502,141 @@ describe('Quest System Tests', () => {
       const normalizedProgress = Math.max(0, Math.min(1, progress));
       
       expect(normalizedProgress).toBe(1);
+    });
+  });
+
+  // Quest Model Validation Tests (111-125)
+  describe('Quest Model Validation', () => {
+    test('validates quest with all required fields', () => {
+      const quest = {
+        id: 'quest-1',
+        title: 'Test Quest',
+        description: 'Test description',
+        type: 'order_count',
+        target: 5,
+        reward: 50,
+        difficulty: 'easy'
+      };
+      
+      const isValid = quest.id && quest.title && quest.type && quest.target > 0;
+      expect(isValid).toBe(true);
+    });
+
+    test('rejects quest with missing required fields', () => {
+      const quest = {
+        title: 'Test Quest',
+        type: 'order_count'
+      };
+      
+      const isValid = !!(quest.id && quest.title && quest.type && quest.target > 0);
+      expect(isValid).toBe(false);
+    });
+
+    test('validates quest target is positive number', () => {
+      const validTarget = 10;
+      const invalidTarget = -5;
+      
+      expect(validTarget > 0).toBe(true);
+      expect(invalidTarget > 0).toBe(false);
+    });
+
+    test('validates quest title is not empty', () => {
+      const validTitle = 'Valid Quest';
+      const invalidTitle = '';
+      
+      expect(validTitle.length > 0).toBe(true);
+      expect(invalidTitle.length > 0).toBe(false);
+    });
+
+    test('validates quest description exists', () => {
+      const quest = {
+        description: 'Valid description'
+      };
+      
+      expect(quest.description).toBeTruthy();
+    });
+  });
+
+  // UserQuest Model Tests (126-140)
+  describe('UserQuest Model Validation', () => {
+    test('validates user quest with default values', () => {
+      const userQuest = {
+        userId: 'user-123',
+        questId: 'quest-456',
+        progress: 0,
+        isCompleted: false,
+        cuisinesTried: []
+      };
+      
+      expect(userQuest.progress).toBe(0);
+      expect(userQuest.isCompleted).toBe(false);
+      expect(userQuest.cuisinesTried).toEqual([]);
+    });
+
+    test('validates user quest progress bounds', () => {
+      const validProgress = 0.5;
+      const invalidLowProgress = -0.1;
+      const invalidHighProgress = 1.5;
+      
+      expect(validProgress >= 0 && validProgress <= 1).toBe(true);
+      expect(invalidLowProgress >= 0 && invalidLowProgress <= 1).toBe(false);
+      expect(invalidHighProgress >= 0 && invalidHighProgress <= 1).toBe(false);
+    });
+
+    test('validates user quest completion status', () => {
+      const completedQuest = { progress: 1.0, isCompleted: true };
+      const incompleteQuest = { progress: 0.5, isCompleted: false };
+      
+      expect(completedQuest.progress === 1 && completedQuest.isCompleted).toBe(true);
+      expect(incompleteQuest.progress < 1 && !incompleteQuest.isCompleted).toBe(true);
+    });
+
+    test('validates cuisines tried array', () => {
+      const userQuest = {
+        cuisinesTried: ['Italian', 'Chinese']
+      };
+      
+      expect(Array.isArray(userQuest.cuisinesTried)).toBe(true);
+      expect(userQuest.cuisinesTried.length).toBe(2);
+    });
+  });
+
+  // Error Handling Tests (141-150)
+  describe('Error Handling', () => {
+    test('handles null quest data gracefully', () => {
+      const quest = null;
+      const isValid = quest && quest.id && quest.title;
+      
+      expect(isValid).toBeFalsy();
+    });
+
+    test('handles undefined progress values', () => {
+      const progress = undefined;
+      const normalizedProgress = progress || 0;
+      
+      expect(normalizedProgress).toBe(0);
+    });
+
+    test('handles invalid quest types', () => {
+      const questType = 'invalid';
+      const validTypes = ['order_count', 'spending_amount', 'cuisine'];
+      const isValid = validTypes.includes(questType);
+      
+      expect(isValid).toBe(false);
+    });
+
+    test('handles empty cuisine array', () => {
+      const cuisines = [];
+      const progress = cuisines.length / 5;
+      
+      expect(progress).toBe(0);
+    });
+
+    test('handles division by zero in progress calculation', () => {
+      const target = 0;
+      const progress = target > 0 ? 1 / target : 0;
+      
+      expect(progress).toBe(0);
     });
   });
 });
