@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { db } = require('../config/firebase');
 const User = require('../models/User');
+const { updateQuestProgress } = require('./quests');
 
 const router = express.Router();
 
@@ -60,6 +61,14 @@ router.post('/', [
     };
 
     await orderRef.set(order);
+
+    // Update quest progress for the customer
+    try {
+      await updateQuestProgress(customerId, order);
+    } catch (questError) {
+      console.error('Quest progress update failed:', questError);
+      // Don't fail the order creation if quest update fails
+    }
 
     res.status(201).json({
       message: 'Order created successfully',
@@ -180,10 +189,17 @@ router.put('/:id/status', [
 
     // Update order status in Firebase
     const orderRef = db.collection('orders').doc(id);
-    await orderRef.update({
+    const updateData = {
       status: status,
       updatedAt: new Date()
-    });
+    };
+    
+    // Add deliveredAt timestamp if status is delivered
+    if (status === 'delivered') {
+      updateData.deliveredAt = new Date();
+    }
+    
+    await orderRef.update(updateData);
 
     // When order is marked as ready, it becomes available for riders to accept
     // No automatic assignment - riders will see it in their available orders list

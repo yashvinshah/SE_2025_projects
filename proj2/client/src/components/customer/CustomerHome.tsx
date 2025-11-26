@@ -41,6 +41,12 @@ const CustomerHome: React.FC = () => {
           <h3>Order History</h3>
           <p>Track your past orders</p>
         </Link>
+        
+        <Link to="/customer/quests" className="action-card">
+          <div className="action-icon">🎯</div>
+          <h3>Food Challenges</h3>
+          <p>Complete quests for bonus points</p>
+        </Link>
       </div>
 
       <div className="featured-restaurants">
