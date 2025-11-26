@@ -1,0 +1,40 @@
+.date-range-picker {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  justify-content: flex-end;
+}
+
+.range-btn {
+  padding: 10px 20px;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  background: white;
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.range-btn:hover {
+  background: #f0f2ff;
+  transform: translateY(-1px);
+}
+
+.range-btn.active {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+@media (max-width: 768px) {
+  .date-range-picker {
+    justify-content: center;
+  }
+
+  .range-btn {
+    flex: 1;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}
