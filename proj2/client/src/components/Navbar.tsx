@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import './Navbar.css';
@@ -41,7 +41,7 @@ const Navbar: React.FC = () => {
               <Link to={getDashboardLink()} className="navbar-link">
                 Dashboard
               </Link>
-              
+
               {user.role === 'customer' && (
                 <Link to="/customer/restaurants" className="navbar-link">
                   Restaurants
@@ -53,13 +53,13 @@ const Navbar: React.FC = () => {
                   Orders
                 </Link>
               )}
-              
+
               {user.role === 'customer' && (
                 <Link to="/customer/quests" className="navbar-link">
                   Quests 🎯
                 </Link>
               )}
-              
+
               {user.role === 'customer' && (
                 <Link to="/customer/cart" className="navbar-link cart-link">
                   Cart ({getTotalItems()})
@@ -82,6 +82,18 @@ const Navbar: React.FC = () => {
                 <Link to="/restaurant/analytics" className="navbar-link">
                   Analytics
                 </Link>
+              )}
+
+              {user.role === 'restaurant' && (
+                <NavLink
+                  to="/restaurant/ratings"
+                  className={({ isActive }) =>
+                    isActive ? 'navbar-link active' : 'navbar-link'
+                  }
+                >
+                  <span className="nav-icon">⭐</span>
+                  <span className="nav-text">Ratings</span>
+                </NavLink>
               )}
 
               {user.role === 'delivery' && (

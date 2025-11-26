@@ -18,6 +18,16 @@ const RestaurantHome: React.FC = () => {
     enabled: !!user
   });
 
+  // Fetch rating stats for the stats card
+  const { data: ratingStats } = useQuery({
+    queryKey: ['restaurant-rating-stats', user?.id],
+    queryFn: async () => {
+      const response = await api.get(`/ratings/restaurant/${user?.id}/stats`);
+      return response.data;
+    },
+    enabled: !!user
+  });
+
   const updateOrderStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
       const response = await api.put(`/orders/${orderId}/status`, { status });
@@ -53,11 +63,15 @@ const RestaurantHome: React.FC = () => {
             <div className="stat-label">Pending Orders</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-rating">
           <div className="stat-icon">⭐</div>
           <div className="stat-content">
-            <div className="stat-number">4.8</div>
-            <div className="stat-label">Average Rating</div>
+            <div className="stat-number">
+              {ratingStats?.averageRating || '0.0'}
+            </div>
+            <div className="stat-label">
+              Average Rating ({ratingStats?.totalRatings || 0} reviews)
+            </div>
           </div>
         </div>
       </div>
@@ -73,6 +87,12 @@ const RestaurantHome: React.FC = () => {
           <div className="action-icon">📦</div>
           <h3>View Orders</h3>
           <p>Manage all incoming orders</p>
+        </Link>
+
+        <Link to="/restaurant/ratings" className="action-card">
+          <div className="action-icon">⭐</div>
+          <h3>View Ratings</h3>
+          <p>See customer reviews and ratings</p>
         </Link>
         
         <Link to="/restaurant/promos" className="action-card">

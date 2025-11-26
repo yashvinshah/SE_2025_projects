@@ -22,6 +22,28 @@ const RestaurantList: React.FC = () => {
     },
   });
 
+  // Fetch ratings for selected restaurant
+  const { data: restaurantRatings, isLoading: ratingsLoading } = useQuery({
+    queryKey: ['ratings', selectedRestaurant?.id],
+    queryFn: async () => {
+      if (!selectedRestaurant?.id) return null;
+      const response = await api.get(`/ratings/restaurant/${selectedRestaurant.id}`);
+      return response.data;
+    },
+    enabled: !!selectedRestaurant
+  });
+
+  // Fetch rating statistics
+  const { data: ratingStats } = useQuery({
+    queryKey: ['rating-stats', selectedRestaurant?.id],
+    queryFn: async () => {
+      if (!selectedRestaurant?.id) return null;
+      const response = await api.get(`/ratings/restaurant/${selectedRestaurant.id}/stats`);
+      return response.data;
+    },
+    enabled: !!selectedRestaurant
+  });
+
   // Add to wishlist mutation
   const addToWishlistMutation = useMutation({
     mutationFn: (item: any) => wishlistApi.addItem(user!.id, item),
@@ -107,6 +129,9 @@ const RestaurantList: React.FC = () => {
               <p className="restaurant-cuisine">{restaurant.cuisine}</p>
               <div className="restaurant-rating">
                 <span className="rating">⭐ {restaurant.rating}</span>
+                {restaurant.totalRatings > 0 && (
+                  <span className="rating-count">({restaurant.totalRatings} reviews)</span>
+                )}
                 <span className="delivery-time">{restaurant.deliveryTime}</span>
               </div>
               <p className="restaurant-description">
@@ -140,13 +165,22 @@ const RestaurantList: React.FC = () => {
             >
               ← Back to Restaurants
             </button>
-            <h2>{selectedRestaurant.name}</h2>
-            {selectedRestaurant.isLocalLegend && (
-              <span className="local-legend-badge">🏆 Local Legend - Extra Points!</span>
-            )}
+            <div className="restaurant-info">
+              <h2>{selectedRestaurant.name}</h2>
+              {selectedRestaurant.isLocalLegend && (
+                <span className="local-legend-badge">🏆 Local Legend - Extra Points!</span>
+              )}
+              {ratingStats && (
+                <div className="rating-summary">
+                  <span className="rating-stars">⭐ {ratingStats.averageRating}</span>
+                  <span className="rating-count">({ratingStats.totalRatings} reviews)</span>
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="menu-items">
+            <h3>Menu</h3>
             {selectedRestaurant.menu?.map((item: any) => (
               <div key={item.id} className="menu-item">
                 <div className="menu-item-info">
@@ -172,6 +206,70 @@ const RestaurantList: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Ratings Section */}
+          <div className="restaurant-ratings-section">
+            <h3>Customer Reviews</h3>
+            
+            {ratingStats && ratingStats.totalRatings > 0 && (
+              <div className="rating-stats">
+                <div className="rating-overview">
+                  <div className="average-rating">
+                    <span className="rating-number">{ratingStats.averageRating}</span>
+                    <div className="rating-stars">
+                      {'⭐'.repeat(Math.round(ratingStats.averageRating))}
+                    </div>
+                    <span className="total-reviews">{ratingStats.totalRatings} reviews</span>
+                  </div>
+                  
+                  <div className="rating-distribution">
+                    {[5, 4, 3, 2, 1].map(star => (
+                      <div key={star} className="distribution-bar">
+                        <span className="star-label">{star} ⭐</span>
+                        <div className="bar-container">
+                          <div 
+                            className="bar-fill" 
+                            style={{ 
+                              width: `${ratingStats.totalRatings > 0 
+                                ? (ratingStats.ratingDistribution[star] / ratingStats.totalRatings * 100) 
+                                : 0}%` 
+                            }}
+                          />
+                        </div>
+                        <span className="count">{ratingStats.ratingDistribution[star]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {ratingsLoading ? (
+              <div className="ratings-loading">Loading reviews...</div>
+            ) : restaurantRatings && restaurantRatings.ratings.length > 0 ? (
+              <div className="ratings-list">
+                {restaurantRatings.ratings.map((rating: any) => (
+                  <div key={rating.orderId} className="rating-card">
+                    <div className="rating-header">
+                      <div className="rating-stars">
+                        {'⭐'.repeat(rating.rating)}
+                      </div>
+                      <small className="rating-date">
+                        {new Date(rating.ratedAt?.toDate?.() || rating.ratedAt).toLocaleDateString()}
+                      </small>
+                    </div>
+                    {rating.review && (
+                      <p className="rating-review">{rating.review}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="no-ratings">
+                <p>No reviews yet. Be the first to review!</p>
+              </div>
+            )}
           </div>
         </div>
       )}
