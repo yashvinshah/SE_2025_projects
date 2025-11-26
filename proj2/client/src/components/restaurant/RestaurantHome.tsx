@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
@@ -59,6 +60,26 @@ const RestaurantHome: React.FC = () => {
             <div className="stat-label">Average Rating</div>
           </div>
         </div>
+      </div>
+
+      <div className="quick-actions">
+        <Link to="/restaurant/menu" className="action-card">
+          <div className="action-icon">📝</div>
+          <h3>Manage Menu</h3>
+          <p>Add, edit, or remove menu items</p>
+        </Link>
+        
+        <Link to="/restaurant/orders" className="action-card">
+          <div className="action-icon">📦</div>
+          <h3>View Orders</h3>
+          <p>Manage all incoming orders</p>
+        </Link>
+        
+        <Link to="/restaurant/promos" className="action-card">
+          <div className="action-icon">🎉</div>
+          <h3>Manage Promos</h3>
+          <p>Create and manage promotional offers</p>
+        </Link>
       </div>
 
       {pendingOrders && pendingOrders.length > 0 && (
