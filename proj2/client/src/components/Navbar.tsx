@@ -72,6 +72,12 @@ const Navbar: React.FC = () => {
                 </Link>
               )}
 
+              {user.role === 'restaurant' && (
+                <Link to="/restaurant/analytics" className="navbar-link">
+                  Analytics
+                </Link>
+              )}
+
               {user.role === 'delivery' && (
                 <Link to="/delivery/orders" className="navbar-link">
                   Orders
