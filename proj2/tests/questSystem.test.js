@@ -37,7 +37,6 @@ describe('Quest System Tests', () => {
     });
 
     test('calculates progress for first order', () => {
-      const currentProgress = 0;
       const target = 3;
       const newProgress = Math.min(1, 1 / target);
       
