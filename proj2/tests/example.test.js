@@ -1,6 +1,5 @@
 // Hungry Wolf Application Tests
 // Testing business logic, points system, order management, and user roles
-
 // Import business logic functions from utilities module
 const {
   calculatePointsForOrder,

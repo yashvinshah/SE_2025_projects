@@ -156,6 +156,26 @@
   background: #5a6268;
 }
 
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.reorder-btn {
+  margin-right: 8px;
+}
+
+.reorder-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .no-orders {
   text-align: center;
   padding: 60px 20px;

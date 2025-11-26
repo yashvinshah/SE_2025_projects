@@ -29,7 +29,7 @@ class Order {
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       await orderRef.set(orderDoc);
       return new Order(orderDoc);
     } catch (error) {
@@ -57,8 +57,8 @@ class Order {
         .where('customerId', '==', customerId)
         .orderBy('createdAt', 'desc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
@@ -73,8 +73,8 @@ class Order {
         .where('restaurantId', '==', restaurantId)
         .orderBy('createdAt', 'desc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
@@ -89,8 +89,8 @@ class Order {
         .where('deliveryPartnerId', '==', deliveryPartnerId)
         .orderBy('createdAt', 'desc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
@@ -112,14 +112,14 @@ class Order {
       }
 
       await orderRef.update(updateData);
-      
+
       // Update local instance
       this.status = newStatus;
       this.updatedAt = updateData.updatedAt;
       if (newStatus === 'delivered') {
         this.deliveredAt = updateData.deliveredAt;
       }
-      
+
       return this;
     } catch (error) {
       throw new Error(`Failed to update order status: ${error.message}`);
@@ -134,41 +134,73 @@ class Order {
         deliveryPartnerId,
         updatedAt: new Date()
       });
-      
+
       this.deliveryPartnerId = deliveryPartnerId;
       this.updatedAt = new Date();
-      
+
       return this;
     } catch (error) {
       throw new Error(`Failed to assign delivery partner: ${error.message}`);
     }
   }
 
+  // // Add rating
+  // async addRating(raterRole, ratingData) {
+  //   try {
+  //     const orderRef = db.collection('orders').doc(this.id);
+  //     const currentRatings = this.ratings || {};
+
+  //     // if (!currentRatings[raterRole]) {
+  //     //   currentRatings[raterRole] = {};
+  //     // }
+
+  //     // currentRatings[raterRole] = { ...currentRatings[raterRole], ...ratingData };
+  //     currentRatings[raterRole] = {
+  //       rating: ratingData.rating,
+  //       review: ratingData.review || null,
+  //       ratedAt: new Date()
+  //     };
+
+  //     await orderRef.update({
+  //       ratings: currentRatings,
+  //       updatedAt: new Date()
+  //     });
+
+  //     this.ratings = currentRatings;
+  //     this.updatedAt = new Date();
+
+  //     return this;
+  //   } catch (error) {
+  //     throw new Error(`Failed to add rating: ${error.message}`);
+  //   }
+  // }
+
   // Add rating
-  async addRating(raterRole, ratingData) {
-    try {
-      const orderRef = db.collection('orders').doc(this.id);
-      const currentRatings = this.ratings || {};
-      
-      if (!currentRatings[raterRole]) {
-        currentRatings[raterRole] = {};
-      }
-      
-      currentRatings[raterRole] = { ...currentRatings[raterRole], ...ratingData };
-      
-      await orderRef.update({
-        ratings: currentRatings,
-        updatedAt: new Date()
-      });
-      
-      this.ratings = currentRatings;
-      this.updatedAt = new Date();
-      
-      return this;
-    } catch (error) {
-      throw new Error(`Failed to add rating: ${error.message}`);
-    }
+async addRating(raterRole, ratingData) {
+  try {
+    const orderRef = db.collection('orders').doc(this.id);
+    const currentRatings = this.ratings || {};
+
+    currentRatings[raterRole] = {
+      rating: ratingData.rating,
+      review: ratingData.review || null,
+      ratedAt: new Date()
+    };
+
+    await orderRef.update({
+      ratings: currentRatings,
+      updatedAt: new Date()
+    });
+
+    this.ratings = currentRatings;
+    this.updatedAt = new Date();
+
+    return this;
+  } catch (error) {
+    throw new Error(`Failed to add rating: ${error.message}`);
   }
+}
+
 
   // Get pending orders for restaurant
   static async getPendingOrders() {
@@ -177,8 +209,8 @@ class Order {
         .where('status', '==', 'pending')
         .orderBy('createdAt', 'asc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
