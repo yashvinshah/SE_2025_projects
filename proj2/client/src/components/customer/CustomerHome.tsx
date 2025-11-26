@@ -41,6 +41,18 @@ const CustomerHome: React.FC = () => {
           <h3>Order History</h3>
           <p>Track your past orders</p>
         </Link>
+
+        <Link to="/customer/wishlist" className="action-card">
+          <div className="action-icon">❤️</div>
+          <h3>My Wishlist</h3>
+          <p>View your saved favorites</p>
+        </Link>
+
+        <Link to="/customer/subscription" className="action-card">
+          <div className="action-icon">🗓️</div>
+          <h3>Meal Subscription</h3>
+          <p>Weekly meal plans & promos</p>
+        </Link>
       </div>
 
       <div className="featured-restaurants">
