@@ -10,6 +10,7 @@ const restaurantRoutes = require('./routes/restaurant');
 const deliveryRoutes = require('./routes/delivery');
 const orderRoutes = require('./routes/orders');
 const { router: pointsRoutes, awardPointsForOrder } = require('./routes/points');
+const { router: questRoutes } = require('./routes/quests');
 const donationRoutes = require('./routes/donations');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/points', pointsRoutes);
+app.use('/api/quests', questRoutes);
 app.use('/api/donations', donationRoutes);
 
 // Health check endpoint
