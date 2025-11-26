@@ -7,6 +7,7 @@ import CustomerHome from '../components/customer/CustomerHome';
 import RestaurantList from '../components/customer/RestaurantList';
 import Cart from '../components/customer/Cart';
 import Orders from '../components/customer/Orders';
+import Quests from '../components/customer/Quests';
 import Profile from '../components/customer/Profile';
 import './Dashboard.css';
 
@@ -59,6 +60,7 @@ const CustomerDashboard: React.FC = () => {
           <Route path="/restaurants" element={<RestaurantList />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/quests" element={<Quests />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
