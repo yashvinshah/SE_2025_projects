@@ -4,7 +4,7 @@
   "description": "Hungry Wolf - Not Just Food, A Quest Worth Savoring. A gamified food-delivery platform.",
   "main": "server/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "npx concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",
     "build": "cd client && npm run build",
