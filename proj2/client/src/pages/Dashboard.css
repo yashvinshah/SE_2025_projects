@@ -121,4 +121,7 @@
   .stat-number {
     font-size: 1.5rem;
   }
+  .stat-card-rating {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
 }
