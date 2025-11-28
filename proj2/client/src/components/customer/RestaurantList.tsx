@@ -278,3 +278,5 @@ const RestaurantList: React.FC = () => {
 };
 
 export default RestaurantList;
+
+
