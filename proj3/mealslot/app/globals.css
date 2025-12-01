@@ -18,6 +18,24 @@
   --card-border: 38 38 38; /* neutral-800 */
 }
 
+/* Surface tokens for consistent light/dark styling */
+:root {
+  --surface-bg: rgba(255,255,255,0.9);
+  --surface-border: rgba(229,231,235,1);
+  --surface-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  --chip-bg: #f0ece6;
+  --chip-hover: #e9e4dd;
+  --chip-text: #1f2937;
+}
+.dark {
+  --surface-bg: rgba(28,30,35,0.9);
+  --surface-border: rgba(48,50,55,0.9);
+  --surface-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  --chip-bg: #26282d;
+  --chip-hover: #303237;
+  --chip-text: #e6e7e8;
+}
+
 html, body {
   background-color: rgb(var(--bg));
   color: rgb(var(--fg));
@@ -25,9 +43,10 @@ html, body {
 
 /* Handy utility classes for your cards/sections */
 .card {
-  @apply rounded-2xl border p-6;
-  background-color: rgb(var(--card));
-  border-color: rgb(var(--card-border));
+  @apply rounded-2xl border p-6 backdrop-blur-md;
+  background-color: var(--surface-bg);
+  border-color: var(--surface-border);
+  box-shadow: var(--surface-shadow);
 }
 /* ==== DARK-MODE RESCUE SHIM (quick global fix) ==== */
 @layer base {
@@ -95,14 +114,33 @@ html, body {
 /* ==== DARK MODE BUTTON VISIBILITY ==== */
 @layer base {
   /* generic buttons */
-  .dark button {
-    background-color: rgb(38 38 38);   /* neutral-800 */
-    color: rgb(243 244 246);           /* slate-100 */
-    border: 1px solid rgb(64 64 64);   /* neutral-700 */
+  /* unified surface/button/chip classes (light + dark via css variables) */
+  .surface {
+    border-radius: 1rem; /* rounded-2xl */
+    background: var(--surface-bg);
+    border: 1px solid var(--surface-border);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--surface-shadow);
   }
-  .dark button:hover:not(:disabled) {
-    background-color: rgb(64 64 64);   /* neutral-700 */
+
+  .site-header {
+    background: var(--surface-bg);
+    border-bottom: 1px solid var(--surface-border);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--surface-shadow);
   }
+
+  .chip, .btn-chip {
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    transition: background 0.15s ease, transform 0.08s ease;
+    border-radius: 9999px; /* rounded-full */
+  }
+  .chip:hover, .btn-chip:hover { background: var(--chip-hover); }
 
   /* disabled state should still be legible */
   .dark button:disabled {
@@ -117,5 +155,9 @@ html, body {
   .dark .text-gray-400 { color: rgb(212 212 212) !important; }
   .dark .ring-gray-200 { --tw-ring-color: rgb(64 64 64) !important; }
 }
+
+/* Provide sensible defaults for existing bg-white/90 usages */
+.bg-white\/90 { background-color: var(--surface-bg) !important; }
+.bg-white { background-color: var(--surface-bg) !important; }
 
 

@@ -2,6 +2,7 @@
 import "./globals.css";
 import type { ReactNode } from "react";
 import ThemeProvider from "@/components/theme-provider";
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata = {
   title: "MealSlot",
@@ -24,6 +25,13 @@ const noFoucScript = `
       try { localStorage.setItem('theme', next ? 'dark' : 'light'); } catch {}
       return next;
     };
+    // Remove known extension-injected attributes (e.g. Grammarly) before React hydration
+    try {
+      var attrs = ['data-new-gr-c-s-check-loaded', 'data-gr-ext-installed'];
+      attrs.forEach(function(a) {
+        document.querySelectorAll('['+a+']').forEach(function(el){ el.removeAttribute(a); });
+      });
+    } catch(e) {}
   } catch(e) {}
 })();
 `;
@@ -34,9 +42,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: noFoucScript }} />
       </head>
-      <body className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+      <body className="min-h-screen bg-gradient-to-br from-[#faf9f7] via-[#fefefe] to-[#f5f4f2] text-neutral-900 dark:bg-gradient-to-br dark:from-[#1b1d22] dark:via-[#1e2026] dark:to-[#111215] dark:text-neutral-100">
         <ThemeProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
