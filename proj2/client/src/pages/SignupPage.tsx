@@ -1,78 +1,131 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import './AuthPage.css';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import axios from "axios";
+import "./AuthPage.css";
 
 const SignupPage: React.FC = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    role: 'customer' as 'customer' | 'restaurant' | 'delivery',
+    email: "",
+    password: "",
+    role: "customer" as "customer" | "restaurant" | "delivery",
     profile: {
-      name: '',
-      phone: '',
+      name: "",
+      phone: "",
       address: {
-        street: '',
-        city: '',
-        state: '',
-        zipCode: ''
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
       },
       // Restaurant-specific fields
-      cuisine: '',
-      description: '',
+      cuisine: "",
+      description: "",
       // Delivery-specific fields
-      vehicleType: '',
-      licensePlate: ''
-    }
+      vehicleType: "",
+      licensePlate: "",
+    },
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const getGeocode = async (addressObj: typeof formData.profile.address) => {
+    try {
+      const addressString = `${addressObj.street}, ${addressObj.city}, ${addressObj.state} ${addressObj.zipCode}`;
+      const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY; // 記得在 client/.env 設定此變數
+
+      if (!apiKey) {
+        console.warn("Google Maps API Key not found");
+        return null;
+      }
+
+      console.log(`正在查詢地址: ${addressString}`); // for dev
+
+      // 直接呼叫 Google API
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          addressString
+        )}&key=${apiKey}`
+      );
+
+      if (response.data.status === "OK" && response.data.results.length > 0) {
+        const { lat, lng } = response.data.results[0].geometry.location;
+
+        console.log("Google Geocoding API 結果 (lat, lng):", lat, lng); // for dev
+
+        return { lat, lng };
+      } else {
+        throw new Error("無法找到此地址，請檢查輸入是否正確");
+      }
+    } catch (error: any) {
+      console.error("Geocoding error:", error);
+      // 您可以選擇拋出錯誤讓 handleSubmit 捕獲並顯示給使用者
+      throw new Error(error.message || "地址驗證失敗");
+    }
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    
-    if (name.startsWith('profile.')) {
-      const profileField = name.split('.')[1];
-      if (profileField === 'address') {
-        const addressField = name.split('.')[2];
-        setFormData(prev => ({
+
+    if (name.startsWith("profile.")) {
+      const profileField = name.split(".")[1];
+      if (profileField === "address") {
+        const addressField = name.split(".")[2];
+        setFormData((prev) => ({
           ...prev,
           profile: {
             ...prev.profile,
             address: {
               ...prev.profile.address,
-              [addressField]: value
-            }
-          }
+              [addressField]: value,
+            },
+          },
         }));
       } else {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           profile: {
             ...prev.profile,
-            [profileField]: value
-          }
+            [profileField]: value,
+          },
         }));
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      await register(formData);
-      navigate('/');
+      let location = null;
+      // make sure address than calling API
+      if (formData.profile.address.street && formData.profile.address.city) {
+        location = await getGeocode(formData.profile.address);
+      }
+
+      console.log("準備送出的 Location 資料:", location);
+
+      const dataToSubmit = {
+        ...formData,
+        profile: {
+          ...formData.profile,
+          location: location, // 這會將 { lat, lng } 物件傳給後端
+        },
+      };
+      await register(dataToSubmit);
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -82,7 +135,7 @@ const SignupPage: React.FC = () => {
 
   const renderRoleSpecificFields = () => {
     switch (formData.role) {
-      case 'restaurant':
+      case "restaurant":
         return (
           <>
             <div className="form-group">
@@ -91,31 +144,35 @@ const SignupPage: React.FC = () => {
                 type="text"
                 id="profile.cuisine"
                 name="profile.cuisine"
-                value={formData.profile.cuisine || ''}
+                value={formData.profile.cuisine || ""}
                 onChange={handleChange}
                 placeholder="e.g., Italian, Mexican, Asian"
               />
             </div>
             <div className="form-group">
-              <label htmlFor="profile.description">Restaurant Description</label>
+              <label htmlFor="profile.description">
+                Restaurant Description
+              </label>
               <textarea
                 id="profile.description"
                 name="profile.description"
-                value={formData.profile.description || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  profile: {
-                    ...prev.profile,
-                    description: e.target.value
-                  }
-                }))}
+                value={formData.profile.description || ""}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    profile: {
+                      ...prev.profile,
+                      description: e.target.value,
+                    },
+                  }))
+                }
                 placeholder="Tell us about your restaurant"
                 rows={3}
               />
             </div>
           </>
         );
-      case 'delivery':
+      case "delivery":
         return (
           <>
             <div className="form-group">
@@ -123,7 +180,7 @@ const SignupPage: React.FC = () => {
               <select
                 id="profile.vehicleType"
                 name="profile.vehicleType"
-                value={formData.profile.vehicleType || ''}
+                value={formData.profile.vehicleType || ""}
                 onChange={handleChange}
               >
                 <option value="">Select vehicle type</option>
@@ -139,7 +196,7 @@ const SignupPage: React.FC = () => {
                 type="text"
                 id="profile.licensePlate"
                 name="profile.licensePlate"
-                value={formData.profile.licensePlate || ''}
+                value={formData.profile.licensePlate || ""}
                 onChange={handleChange}
                 placeholder="Enter license plate number"
               />
@@ -161,7 +218,7 @@ const SignupPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}
-          
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -288,17 +345,19 @@ const SignupPage: React.FC = () => {
 
           {renderRoleSpecificFields()}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary btn-full"
             disabled={loading}
           >
-            {loading ? 'Creating Account...' : 'Join the Pack'}
+            {loading ? "Creating Account..." : "Join the Pack"}
           </button>
         </form>
 
         <div className="auth-footer">
-          <p>Already have an account? <Link to="/login">Sign in here</Link></p>
+          <p>
+            Already have an account? <Link to="/login">Sign in here</Link>
+          </p>
         </div>
       </div>
     </div>
