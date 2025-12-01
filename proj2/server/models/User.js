@@ -80,6 +80,38 @@ class User {
     }
   }
 
+  /** 🔎 Find user by email */
+  static async findByEmail(email) {
+    try {
+      const usersSnapshot = await db
+        .collection("users")
+        .where("email", "==", email)
+        .limit(1)
+        .get();
+
+      if (usersSnapshot.empty) return null;
+
+      const userDoc = usersSnapshot.docs[0];
+      const data = userDoc.data();
+
+      // 若 Firestore location 是 GeoPoint，自動包裝成 User instance
+      return new User({ id: userDoc.id, ...data });
+    } catch (err) {
+      throw new Error(`Failed to find user by email: ${err.message}`);
+    }
+  }
+
+  /** 🆔 Find by ID */
+  static async findById(id) {
+    try {
+      const doc = await db.collection("users").doc(id).get();
+      if (!doc.exists) return null;
+      return new User({ id: doc.id, ...doc.data() });
+    } catch (err) {
+      throw new Error(`Failed to find user by ID: ${err.message}`);
+    }
+  }
+
   /** 🔥 Update user with GeoPoint support */
   async update(updateData) {
     try {

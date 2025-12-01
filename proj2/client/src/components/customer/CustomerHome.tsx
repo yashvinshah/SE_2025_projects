@@ -1,41 +1,91 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../../services/api';
-import './CustomerHome.css';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../services/api";
+import "./CustomerHome.css";
+
+import { useAuth } from "../../contexts/AuthContext";
+import LocationPickerMap from "../../components/LocationPickerMap";
 
 const CustomerHome: React.FC = () => {
+  const { user, refreshUser } = useAuth();
+  const [saving, setSaving] = useState(false);
+
+  // 🔥 只有 customer 才能看到地圖
+  const showMap = user?.role === "customer";
+
   const { data: restaurants } = useQuery({
-    queryKey: ['restaurants'],
+    queryKey: ["restaurants"],
     queryFn: async () => {
-      const response = await api.get('/customer/restaurants');
+      const response = await api.get("/customer/restaurants");
       return response.data.restaurants;
     },
   });
 
   const { data: recentOrders } = useQuery({
-    queryKey: ['recentOrders'],
+    queryKey: ["recentOrders"],
     queryFn: async () => {
-      const response = await api.get('/orders/customer');
-      return response.data.orders.slice(0, 3); // Get last 3 orders
+      const response = await api.get("/orders/customer");
+      return response.data.orders.slice(0, 3);
     },
   });
 
+  if (!user) {
+    return <div className="loading">Loading user...</div>;
+  }
+
+  // ⭐ 當使用者在地圖上選擇新位置
+  const handleLocationSelected = async (lat: number, lng: number) => {
+    setSaving(true);
+
+    try {
+      await api.put(`/users/${user.id}`, {
+        profile: {
+          ...user.profile,
+          location: { lat, lng },
+        },
+      });
+
+      await refreshUser();
+    } catch (err) {
+      console.error("Failed to update location:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="customer-home">
+      {/* ⭐⭐ Google Map Section ⭐⭐ */}
+      {showMap && (
+        <section className="user-location-section">
+          <h2>Your Location</h2>
+          <p>Select your delivery location on the map.</p>
+
+          <LocationPickerMap
+            defaultLat={user?.location?.latitude || undefined}
+            defaultLng={user?.location?.longitude || undefined}
+            onLocationSelected={handleLocationSelected}
+          />
+
+          {saving && <p>Saving your location...</p>}
+        </section>
+      )}
+
+      {/* Quick Actions */}
       <div className="quick-actions">
         <Link to="/customer/restaurants" className="action-card">
           <div className="action-icon">🍽️</div>
           <h3>Browse Restaurants</h3>
           <p>Discover amazing local restaurants</p>
         </Link>
-        
+
         <Link to="/customer/cart" className="action-card">
           <div className="action-icon">🛒</div>
           <h3>View Cart</h3>
           <p>Check your current order</p>
         </Link>
-        
+
         <Link to="/customer/orders" className="action-card">
           <div className="action-icon">📦</div>
           <h3>Order History</h3>
@@ -43,6 +93,7 @@ const CustomerHome: React.FC = () => {
         </Link>
       </div>
 
+      {/* Featured Restaurants */}
       <div className="featured-restaurants">
         <h2>Featured Restaurants</h2>
         <div className="restaurants-grid">
@@ -59,8 +110,8 @@ const CustomerHome: React.FC = () => {
                 <span className="rating">⭐ {restaurant.rating}</span>
                 <span className="delivery-time">{restaurant.deliveryTime}</span>
               </div>
-              <Link 
-                to={`/customer/restaurants?restaurant=${restaurant.id}`} 
+              <Link
+                to={`/customer/restaurants?restaurant=${restaurant.id}`}
                 className="btn btn-primary"
               >
                 View Menu
@@ -70,6 +121,7 @@ const CustomerHome: React.FC = () => {
         </div>
       </div>
 
+      {/* Recent Orders */}
       {recentOrders && recentOrders.length > 0 && (
         <div className="recent-orders">
           <h2>Recent Orders</h2>
@@ -80,11 +132,14 @@ const CustomerHome: React.FC = () => {
                   <h4>Order #{order.id.slice(-6)}</h4>
                   <p>Total: ${order.totalAmount}</p>
                   <span className={`status status-${order.status}`}>
-                    {order.status.replace('_', ' ').toUpperCase()}
+                    {order.status.replace("_", " ").toUpperCase()}
                   </span>
                 </div>
                 <div className="order-actions">
-                  <Link to={`/customer/orders/${order.id}`} className="btn btn-secondary">
+                  <Link
+                    to={`/customer/orders/${order.id}`}
+                    className="btn btn-secondary"
+                  >
                     View Details
                   </Link>
                 </div>
