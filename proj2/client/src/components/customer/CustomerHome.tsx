@@ -10,9 +10,7 @@ import LocationPickerMap from "../../components/LocationPickerMap";
 const CustomerHome: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [saving, setSaving] = useState(false);
-
-  // 🔥 只有 customer 才能看到地圖
-  const showMap = user?.role === "customer";
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const { data: restaurants } = useQuery({
     queryKey: ["restaurants"],
@@ -26,29 +24,38 @@ const CustomerHome: React.FC = () => {
     queryKey: ["recentOrders"],
     queryFn: async () => {
       const response = await api.get("/orders/customer");
-      return response.data.orders.slice(0, 3);
+      return response.data.orders.slice(0, 3); // Get last 3 orders
     },
   });
 
+  // 保險：如果還沒有 user 就先不要 render
   if (!user) {
-    return <div className="loading">Loading user...</div>;
+    return <div className="customer-home">Loading user...</div>;
   }
 
-  // ⭐ 當使用者在地圖上選擇新位置
-  const handleLocationSelected = async (lat: number, lng: number) => {
+  // ⭐ 使用者在地圖上選好位置、按下 Set 時要呼叫的 function
+  const handleLocationSelected = async (
+    lat: number,
+    lng: number,
+    addr: string
+  ) => {
     setSaving(true);
-
     try {
       await api.put(`/users/${user.id}`, {
         profile: {
           ...user.profile,
           location: { lat, lng },
+          address: {
+            ...user.profile?.address,
+            fullAddress: addr, // 不覆蓋原本 street/city/state/zip，只是多存一個字串
+          },
         },
       });
 
       await refreshUser();
     } catch (err) {
       console.error("Failed to update location:", err);
+      alert("Failed to save location");
     } finally {
       setSaving(false);
     }
@@ -56,23 +63,41 @@ const CustomerHome: React.FC = () => {
 
   return (
     <div className="customer-home">
-      {/* ⭐⭐ Google Map Section ⭐⭐ */}
-      {showMap && (
-        <section className="user-location-section">
-          <h2>Your Location</h2>
-          <p>Select your delivery location on the map.</p>
+      {/* ⭐⭐ 這一塊是「顯示目前地址 + 按鈕打開 map」 ⭐⭐ */}
+      <section className="user-location-section">
+        <div className="user-location-header">
+          <span>
+            📍 Current address:{" "}
+            {user.profile?.address?.fullAddress ||
+              "No address set. Click the button to set one."}
+          </span>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowLocationPicker((prev) => !prev)}
+          >
+            {showLocationPicker
+              ? "Close map"
+              : user.profile?.address?.fullAddress
+              ? "Change address"
+              : "Set address"}
+          </button>
+        </div>
 
-          <LocationPickerMap
-            defaultLat={user?.location?.latitude || undefined}
-            defaultLng={user?.location?.longitude || undefined}
-            onLocationSelected={handleLocationSelected}
-          />
+        {showLocationPicker && (
+          <div className="user-location-map-wrapper">
+            <LocationPickerMap
+              // 如果你有把 Firestore 的 GeoPoint 回傳到 user.location
+              defaultLat={user.location?.latitude}
+              defaultLng={user.location?.longitude}
+              defaultAddress={user.profile?.address?.fullAddress}
+              onLocationSelected={handleLocationSelected}
+            />
+            {saving && <p>Saving your location...</p>}
+          </div>
+        )}
+      </section>
 
-          {saving && <p>Saving your location...</p>}
-        </section>
-      )}
-
-      {/* Quick Actions */}
+      {/* 原本的 quick actions */}
       <div className="quick-actions">
         <Link to="/customer/restaurants" className="action-card">
           <div className="action-icon">🍽️</div>
@@ -93,7 +118,7 @@ const CustomerHome: React.FC = () => {
         </Link>
       </div>
 
-      {/* Featured Restaurants */}
+      {/* Featured restaurants */}
       <div className="featured-restaurants">
         <h2>Featured Restaurants</h2>
         <div className="restaurants-grid">
@@ -121,7 +146,7 @@ const CustomerHome: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Orders */}
+      {/* Recent orders */}
       {recentOrders && recentOrders.length > 0 && (
         <div className="recent-orders">
           <h2>Recent Orders</h2>
