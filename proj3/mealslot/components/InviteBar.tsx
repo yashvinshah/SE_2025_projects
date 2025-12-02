@@ -31,7 +31,7 @@ export default function InviteBar() {
   };
 
   return (
-    <div className="rounded-2xl border bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="rounded-2xl border border-neutral-200 bg-white/90 backdrop-blur-md p-3 shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-[#303237] dark:bg-[#1c1e23]/90 dark:shadow-[0_4px_12px_rgba(0,0,0,0.25)]">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm">
           Share this invite link with your friend. If you have a <code>?code=ABC123</code> in the URL, it’s included.

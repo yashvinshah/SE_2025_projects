@@ -26,7 +26,7 @@ export default function ToastStack({
       {items.map((t) => (
         <div
           key={t.id}
-          className="pointer-events-auto rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm shadow-md dark:border-neutral-700 dark:bg-neutral-900"
+          className="pointer-events-auto rounded-lg border border-neutral-200 bg-white/90 px-3 py-2 text-sm shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:border-[#303237] dark:bg-[#1c1e23]/90 dark:shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
         >
           {t.text}
         </div>
