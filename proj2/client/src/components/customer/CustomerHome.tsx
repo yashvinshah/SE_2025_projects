@@ -361,8 +361,8 @@ const CustomerHome: React.FC = () => {
       )}
 
       {/* Nearby Restaurants：依距離排序（由後端處理） */}
-      <div className="featured-restaurants">
-        <h2>Nearby Restaurants</h2>
+      <div className="ㄏ-restaurants">
+        <h2>Featured Restaurants</h2>
         <div className="restaurants-grid">
           {restaurants?.map((restaurant: any) => (
             <div key={restaurant.id} className="restaurant-card">
@@ -376,8 +376,8 @@ const CustomerHome: React.FC = () => {
               <div className="restaurant-rating">
                 <span className="rating">⭐ {restaurant.rating}</span>
                 <span className="delivery-time">
-                  {restaurant.distanceKm
-                    ? `${restaurant.distanceKm} km away`
+                  {restaurant.distanceMiles
+                    ? `${restaurant.distanceMiles} miles away`
                     : restaurant.deliveryTime}
                 </span>
               </div>
