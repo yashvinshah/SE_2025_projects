@@ -76,21 +76,27 @@ router.put(
 // Get restaurant menu
 router.get("/menu", async (req, res) => {
   try {
-    // Get all restaurant users and return the first one's menu
-    // In a real app, you'd identify the specific restaurant
+    const { ownerId } = req.query;
     const { db } = require("../config/firebase");
-    const usersSnapshot = await db
+
+    if (!ownerId) {
+      return res.status(400).json({ error: "ownerId is required" });
+    }
+
+    // 找到登入的那家餐廳
+    const snap = await db
       .collection("users")
+      .where("id", "==", ownerId)
       .where("role", "==", "restaurant")
       .limit(1)
       .get();
 
-    if (usersSnapshot.empty) {
+    if (snap.empty) {
       return res.json({ menu: [] });
     }
 
-    const userData = usersSnapshot.docs[0].data();
-    const menu = userData.profile?.menu || [];
+    const data = snap.docs[0].data();
+    const menu = data.profile?.menu || [];
 
     res.json({ menu });
   } catch (error) {
@@ -100,109 +106,45 @@ router.get("/menu", async (req, res) => {
 });
 
 // Update restaurant menu
-router.put("/menu", [body("menu").isArray()], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { menu } = req.body;
-
-    // Update the restaurant user's menu in Firebase
-    const { db } = require("../config/firebase");
-    const usersSnapshot = await db
-      .collection("users")
-      .where("role", "==", "restaurant")
-      .limit(1)
-      .get();
-
-    if (usersSnapshot.empty) {
-      return res.status(404).json({ error: "Restaurant not found" });
-    }
-
-    const userDoc = usersSnapshot.docs[0];
-    const userData = userDoc.data();
-
-    // Update the user's profile with the new menu
-    await userDoc.ref.update({
-      "profile.menu": menu,
-      updatedAt: new Date(),
-    });
-
-    res.json({
-      message: "Menu updated successfully",
-      menu: menu,
-    });
-  } catch (error) {
-    console.error("Update restaurant menu error:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Create new restaurant (for new restaurant owners)
-router.post(
-  "/create",
-  [
-    body("email").isEmail().normalizeEmail(),
-    body("password").isLength({ min: 1 }),
-    body("restaurant.name").notEmpty(),
-    body("restaurant.cuisine").notEmpty(),
-    body("restaurant.description").optional().isString(),
-    body("restaurant.address").isObject(),
-    body("restaurant.phone").notEmpty(),
-  ],
+router.put(
+  "/menu",
+  [body("ownerId").isString(), body("menu").isArray()],
   async (req, res) => {
     try {
-      const { db } = require("../config/firebase");
-      const admin = require("firebase-admin");
-      const axios = require("axios");
-
-      const { email, password, restaurant: restaurantData } = req.body;
-
-      // 驗證身分
-      const user = await User.findByEmail(email);
-      if (!user || user.password !== password || user.role !== "restaurant") {
-        return res
-          .status(401)
-          .json({ error: "Invalid credentials or not a restaurant" });
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
       }
 
-      // 建立 restaurant record
-      const restaurant = await Restaurant.create({
-        ...restaurantData,
-        ownerId: user.id,
+      const { ownerId, menu } = req.body;
+      console.log(ownerId);
+
+      const { db } = require("../config/firebase");
+      const usersSnapshot = await db
+        .collection("users")
+        .where("id", "==", ownerId)
+        .where("role", "==", "restaurant")
+        .get();
+
+      if (usersSnapshot.empty) {
+        return res
+          .status(404)
+          .json({ error: "Restaurant not found for this ownerId" });
+      }
+
+      const ownerDoc = usersSnapshot.docs[0];
+
+      await ownerDoc.ref.update({
+        "profile.menu": menu,
+        updatedAt: new Date(),
       });
 
-      // ⭐⭐⭐ 新增：建立 GeoPoint ⭐⭐⭐
-      const address = restaurantData.address;
-      const formatted = `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`;
-      const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        formatted
-      )}&key=${apiKey}`;
-
-      const geo = await axios.get(url);
-      if (geo.data.status === "OK") {
-        const { lat, lng } = geo.data.results[0].geometry.location;
-
-        await db
-          .collection("users")
-          .doc(user.id)
-          .update({
-            location: new admin.firestore.GeoPoint(lat, lng),
-          });
-
-        console.log(`Saved restaurant location: ${lat}, ${lng}`);
-      }
-
-      res.status(201).json({
-        message: "Restaurant created successfully",
-        restaurant: restaurant.toJSON(),
+      res.json({
+        message: "Menu updated successfully",
+        menu,
       });
     } catch (error) {
-      console.error("Create restaurant error:", error);
+      console.error("Update restaurant menu error:", error);
       res.status(500).json({ error: error.message });
     }
   }
