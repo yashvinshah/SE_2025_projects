@@ -1,3 +1,4 @@
+// models/User.js
 const { db } = require("../config/firebase");
 const admin = require("firebase-admin");
 const axios = require("axios");
@@ -11,32 +12,31 @@ class User {
     this.profile = data.profile || {};
     this.deliveryStatus =
       data.deliveryStatus || (data.role === "delivery" ? "free" : null);
-    this.location = data.location || null; // 🔥 GeoPoint
+    this.location = data.location || null; // GeoPoint
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
   }
 
-  /** 🔥 format address */
   static formatAddress(addr) {
     if (!addr) return null;
-    return `${addr.street}, ${addr.city}, ${addr.state} ${addr.zipCode}`;
+    const { street, city, state, zipCode } = addr;
+    return [street, city, state, zipCode].filter(Boolean).join(", ");
   }
 
-  /** 🔥 fetch geocode */
-  static async getGeocode(addrObj) {
+  static async geocodeAddress(addrObj) {
     try {
-      const addressString = User.formatAddress(addrObj);
-      if (!addressString) return null;
+      const formatted = User.formatAddress(addrObj);
+      if (!formatted) return null;
 
       const apiKey = process.env.GOOGLE_MAPS_API_KEY;
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        addressString
+        formatted
       )}&key=${apiKey}`;
 
-      const response = await axios.get(url);
+      const res = await axios.get(url);
 
-      if (response.data.status === "OK") {
-        const { lat, lng } = response.data.results[0].geometry.location;
+      if (res.data.status === "OK" && res.data.results.length > 0) {
+        const { lat, lng } = res.data.results[0].geometry.location;
         return new admin.firestore.GeoPoint(lat, lng);
       }
       return null;
@@ -46,29 +46,29 @@ class User {
     }
   }
 
-  /** 🔥 Create user with GeoPoint support */
+  /** Create user with possible client lat/lng or geocode */
   static async create(userData) {
     try {
       const userRef = db.collection("users").doc();
 
       let geoPoint = null;
 
-      // Case 1: 前端傳 lat/lng
-      if (userData.profile?.location?.lat && userData.profile.location.lng) {
+      // Case 1: client 已經給 lat/lng
+      if (userData.location?.lat && userData.location?.lng) {
         geoPoint = new admin.firestore.GeoPoint(
-          userData.profile.location.lat,
-          userData.profile.location.lng
+          userData.location.lat,
+          userData.location.lng
         );
       }
-      // Case 2: 從 address 自動 geocode
+      // Case 2: 沒 lat/lng → 從 address geocode
       else if (userData.profile?.address) {
-        geoPoint = await User.getGeocode(userData.profile.address);
+        geoPoint = await User.geocodeAddress(userData.profile.address);
       }
 
       const userDoc = {
         id: userRef.id,
         ...userData,
-        location: geoPoint, // <-- 寫入 Firestore GeoPoint
+        location: geoPoint,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -80,59 +80,49 @@ class User {
     }
   }
 
-  /** 🔎 Find user by email */
-  static async findByEmail(email) {
-    try {
-      const usersSnapshot = await db
-        .collection("users")
-        .where("email", "==", email)
-        .limit(1)
-        .get();
-
-      if (usersSnapshot.empty) return null;
-
-      const userDoc = usersSnapshot.docs[0];
-      const data = userDoc.data();
-
-      // 若 Firestore location 是 GeoPoint，自動包裝成 User instance
-      return new User({ id: userDoc.id, ...data });
-    } catch (err) {
-      throw new Error(`Failed to find user by email: ${err.message}`);
-    }
-  }
-
-  /** 🆔 Find by ID */
   static async findById(id) {
-    try {
-      const doc = await db.collection("users").doc(id).get();
-      if (!doc.exists) return null;
-      return new User({ id: doc.id, ...doc.data() });
-    } catch (err) {
-      throw new Error(`Failed to find user by ID: ${err.message}`);
-    }
+    const doc = await db.collection("users").doc(id).get();
+    if (!doc.exists) return null;
+    return new User({ id: doc.id, ...doc.data() });
   }
 
-  /** 🔥 Update user with GeoPoint support */
+  static async findByEmail(email) {
+    const snap = await db
+      .collection("users")
+      .where("email", "==", email)
+      .limit(1)
+      .get();
+    if (snap.empty) return null;
+    const doc = snap.docs[0];
+    return new User({ id: doc.id, ...doc.data() });
+  }
+
   async update(updateData) {
     try {
       const userRef = db.collection("users").doc(this.id);
-
-      let updatePayload = {
+      let payload = {
         ...updateData,
         updatedAt: new Date(),
       };
 
-      // 若地址更新 → geocode
-      if (updateData.profile?.address) {
-        const newLoc = await User.getGeocode(updateData.profile.address);
+      // Case 1: client 有傳 lat/lng
+      if (updateData.location?.lat && updateData.location?.lng) {
+        payload.location = new admin.firestore.GeoPoint(
+          updateData.location.lat,
+          updateData.location.lng
+        );
+      }
+      // Case 2: 沒 lat/lng，但有新的 address
+      else if (updateData.profile?.address) {
+        const newLoc = await User.geocodeAddress(updateData.profile.address);
         if (newLoc) {
-          updatePayload.location = newLoc;
+          payload.location = newLoc;
         }
       }
 
-      await userRef.update(updatePayload);
+      await userRef.update(payload);
 
-      Object.assign(this, updatePayload);
+      Object.assign(this, payload);
       return this;
     } catch (error) {
       throw new Error(`Failed to update user: ${error.message}`);
@@ -145,10 +135,13 @@ class User {
       email: this.email,
       role: this.role,
       profile: this.profile,
-      location: this.location
-        ? { lat: this.location.latitude, lng: this.location.longitude }
-        : null,
       deliveryStatus: this.deliveryStatus,
+      location: this.location
+        ? {
+            latitude: this.location.latitude,
+            longitude: this.location.longitude,
+          }
+        : null,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

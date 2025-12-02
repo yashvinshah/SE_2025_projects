@@ -1,163 +1,139 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
-import axios from "axios";
+// src/components/LocationPickerMap.tsx
+import React, { useEffect, useRef } from "react";
 
-type Props = {
+interface ParsedAddress {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
+
+interface LocationPickerMapProps {
   defaultLat?: number;
   defaultLng?: number;
   defaultAddress?: string;
-  onLocationSelected: (lat: number, lng: number, address: string) => void;
-};
+  onLocationSelected: (
+    lat: number,
+    lng: number,
+    fullAddress: string,
+    structured: ParsedAddress
+  ) => void;
+}
 
-const containerStyle = {
-  width: "100%",
-  height: "320px",
-  borderRadius: "10px",
-};
-
-const LocationPickerMap: React.FC<Props> = ({
-  defaultLat,
-  defaultLng,
+const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
+  defaultLat = 35.7796,
+  defaultLng = -78.6382,
   defaultAddress,
   onLocationSelected,
 }) => {
-  const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "";
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey,
-  });
+  const mapDiv = useRef<HTMLDivElement | null>(null);
+  const map = useRef<google.maps.Map | null>(null);
+  const marker = useRef<google.maps.Marker | null>(null);
+  const geocoder = useRef<google.maps.Geocoder | null>(null);
 
-  const [center, setCenter] = useState<{ lat: number; lng: number } | null>(
-    defaultLat && defaultLng ? { lat: defaultLat, lng: defaultLng } : null
-  );
+  const parseAddressComponents = (
+    components: google.maps.GeocoderAddressComponent[]
+  ): ParsedAddress => {
+    let streetNumber = "";
+    let route = "";
+    let city = "";
+    let state = "";
+    let zip = "";
 
-  const [markerPos, setMarkerPos] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(
-    defaultLat && defaultLng ? { lat: defaultLat, lng: defaultLng } : null
-  );
+    components.forEach((comp) => {
+      if (comp.types.includes("street_number")) streetNumber = comp.long_name;
+      if (comp.types.includes("route")) route = comp.long_name;
+      if (
+        comp.types.includes("locality") ||
+        comp.types.includes("sublocality") ||
+        comp.types.includes("postal_town")
+      ) {
+        if (!city) city = comp.long_name;
+      }
+      if (comp.types.includes("administrative_area_level_1")) {
+        state = comp.short_name;
+      }
+      if (comp.types.includes("postal_code")) {
+        zip = comp.long_name;
+      }
+    });
 
-  const [address, setAddress] = useState(defaultAddress || "");
-
-  /** ⭐ Reverse Geocode：lat/lng → 地址字串 */
-  const reverseGeocode = async (lat: number, lng: number) => {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
-    const res = await axios.get(url);
-
-    if (res.data.status === "OK") {
-      const place = res.data.results[0];
-      return place.formatted_address;
-    }
-    return "";
+    return {
+      street: `${streetNumber} ${route}`.trim(),
+      city,
+      state,
+      zipCode: zip,
+    };
   };
 
-  /** ⭐ Geocode：地址輸入 → lat/lng */
-  const geocodeAddress = async (addressString: string) => {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-      addressString
-    )}&key=${apiKey}`;
+  const reverseGeocode = (latLng: google.maps.LatLng) => {
+    if (!geocoder.current) return;
 
-    const res = await axios.get(url);
+    geocoder.current.geocode({ location: latLng }, (results, status) => {
+      if (status !== "OK" || !results || !results[0]) return;
 
-    if (res.data.status === "OK") {
-      const loc = res.data.results[0].geometry.location;
-      return { lat: loc.lat, lng: loc.lng };
-    }
+      const r = results[0];
+      const fullAddr = r.formatted_address;
+      const structured = parseAddressComponents(r.address_components);
 
-    alert("Address not found");
-    return null;
+      onLocationSelected(latLng.lat(), latLng.lng(), fullAddr, structured);
+    });
   };
 
-  /** ⭐ 自動定位 */
   useEffect(() => {
-    if (defaultLat && defaultLng) {
-      setCenter({ lat: defaultLat, lng: defaultLng });
-      setMarkerPos({ lat: defaultLat, lng: defaultLng });
-      return;
-    }
+    const g = (window as unknown as { google?: typeof google }).google;
+    if (!g || !g.maps || !mapDiv.current) return;
 
-    if (!center && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+    const center = new g.maps.LatLng(defaultLat, defaultLng);
 
-        const addr = await reverseGeocode(lat, lng);
+    map.current = new g.maps.Map(mapDiv.current, {
+      center,
+      zoom: 14,
+    });
 
-        setCenter({ lat, lng });
-        setMarkerPos({ lat, lng });
-        setAddress(addr);
+    marker.current = new g.maps.Marker({
+      map: map.current,
+      position: center,
+      draggable: true,
+    });
 
-        onLocationSelected(lat, lng, addr);
-      });
-    }
-  }, []);
+    geocoder.current = new g.maps.Geocoder();
 
-  /** ⭐ 點擊地圖時更新位置 + 地址 */
-  const handleMapClick = useCallback(
-    async (event: google.maps.MapMouseEvent) => {
+    map.current.addListener("click", (event: google.maps.MapMouseEvent) => {
+      if (!marker.current) return;
       if (!event.latLng) return;
 
-      const lat = event.latLng.lat();
-      const lng = event.latLng.lng();
+      marker.current.setPosition(event.latLng);
+      reverseGeocode(event.latLng);
+    });
 
-      setMarkerPos({ lat, lng });
-      setCenter({ lat, lng });
+    marker.current.addListener(
+      "dragend",
+      (event: google.maps.MapMouseEvent) => {
+        if (!event.latLng) return;
+        reverseGeocode(event.latLng);
+      }
+    );
 
-      const addr = await reverseGeocode(lat, lng);
-      setAddress(addr);
+    // Cleanup — 修正 TS 錯誤版本
+    return () => {
+      const gg = (window as unknown as { google?: typeof google }).google;
+      if (!gg || !gg.maps) return;
 
-      onLocationSelected(lat, lng, addr);
-    },
-    [onLocationSelected]
-  );
-
-  /** ⭐ 手動輸入地址 → move map */
-  const handleAddressSubmit = async () => {
-    if (!address) return;
-
-    const loc = await geocodeAddress(address);
-    if (loc) {
-      setCenter(loc);
-      setMarkerPos(loc);
-
-      onLocationSelected(loc.lat, loc.lng, address);
-    }
-  };
-
-  if (!isLoaded || !center) return <p>Loading map...</p>;
+      if (map.current) gg.maps.event.clearInstanceListeners(map.current);
+      if (marker.current) gg.maps.event.clearInstanceListeners(marker.current);
+    };
+  }, []);
 
   return (
-    <div>
-      {/* ⭐ 地址輸入框 */}
-      <div style={{ marginBottom: "10px" }}>
-        <input
-          type="text"
-          value={address}
-          placeholder="Enter address"
-          onChange={(e) => setAddress(e.target.value)}
-          style={{
-            width: "80%",
-            padding: "8px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            marginRight: "8px",
-          }}
-        />
-        <button onClick={handleAddressSubmit} className="btn btn-primary">
-          Set
-        </button>
-      </div>
-
-      {/* ⭐ Google Map */}
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={15}
-        onClick={handleMapClick}
-      >
-        {markerPos && <Marker position={markerPos} />}
-      </GoogleMap>
-    </div>
+    <div
+      ref={mapDiv}
+      style={{
+        width: "100%",
+        height: "300px",
+        borderRadius: "8px",
+      }}
+    />
   );
 };
 

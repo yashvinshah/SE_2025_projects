@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import { useCart } from '../../contexts/CartContext';
-import { api } from '../../services/api';
-import './RestaurantList.css';
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
+import { useCart } from "../../contexts/CartContext";
+import { api } from "../../services/api";
+import "./RestaurantList.css";
 
 const RestaurantList: React.FC = () => {
   const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
@@ -11,16 +11,16 @@ const RestaurantList: React.FC = () => {
   const { addItem } = useCart();
 
   const { data: restaurants, isLoading } = useQuery({
-    queryKey: ['restaurants'],
+    queryKey: ["restaurants"],
     queryFn: async () => {
-      const response = await api.get('/customer/restaurants');
+      const response = await api.get("/customer/restaurants");
       return response.data.restaurants;
     },
   });
 
   // Handle restaurant parameter from URL
   useEffect(() => {
-    const restaurantId = searchParams.get('restaurant');
+    const restaurantId = searchParams.get("restaurant");
     if (restaurantId && restaurants) {
       const restaurant = restaurants.find((r: any) => r.id === restaurantId);
       if (restaurant) {
@@ -35,7 +35,7 @@ const RestaurantList: React.FC = () => {
       name: menuItem.name,
       price: menuItem.price,
       restaurantId: selectedRestaurant.id,
-      restaurantName: selectedRestaurant.name
+      restaurantName: selectedRestaurant.name,
     });
   };
 
@@ -51,7 +51,7 @@ const RestaurantList: React.FC = () => {
   return (
     <div className="restaurant-list">
       <h1>Restaurants</h1>
-      
+
       {!selectedRestaurant ? (
         <div className="restaurants-grid">
           {restaurants?.map((restaurant: any) => (
@@ -63,14 +63,16 @@ const RestaurantList: React.FC = () => {
                 )}
               </div>
               <p className="restaurant-cuisine">{restaurant.cuisine}</p>
+              <p>{restaurant.distanceMiles} miles away</p>
               <div className="restaurant-rating">
                 <span className="rating">⭐ {restaurant.rating}</span>
                 <span className="delivery-time">{restaurant.deliveryTime}</span>
               </div>
+
               <p className="restaurant-description">
-                {restaurant.description || 'Delicious food awaits you!'}
+                {restaurant.description || "Delicious food awaits you!"}
               </p>
-              <button 
+              <button
                 onClick={() => setSelectedRestaurant(restaurant)}
                 className="btn btn-primary"
               >
@@ -82,7 +84,7 @@ const RestaurantList: React.FC = () => {
       ) : (
         <div className="menu-view">
           <div className="menu-header">
-            <button 
+            <button
               onClick={() => setSelectedRestaurant(null)}
               className="back-btn"
             >
@@ -90,10 +92,12 @@ const RestaurantList: React.FC = () => {
             </button>
             <h2>{selectedRestaurant.name}</h2>
             {selectedRestaurant.isLocalLegend && (
-              <span className="local-legend-badge">🏆 Local Legend - Extra Points!</span>
+              <span className="local-legend-badge">
+                🏆 Local Legend - Extra Points!
+              </span>
             )}
           </div>
-          
+
           <div className="menu-items">
             {selectedRestaurant.menu?.map((item: any) => (
               <div key={item.id} className="menu-item">
@@ -102,7 +106,7 @@ const RestaurantList: React.FC = () => {
                   <p>{item.description}</p>
                   <span className="price">${item.price}</span>
                 </div>
-                <button 
+                <button
                   onClick={() => handleAddToCart(item)}
                   className="btn btn-primary"
                 >
