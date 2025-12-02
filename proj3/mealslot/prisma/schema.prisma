@@ -13,10 +13,13 @@ model User {
   email       String       @unique
   name        String
   provider    String       @default("mock")
+  username    String?      @unique
+  passwordHash String?
   createdAt   DateTime     @default(now())
   favorites   Favorite[]
   spins       Spin[]
   PartyMember PartyMember[]
+  triedMeals  TriedMeal[]
 }
 
 model Category {
@@ -41,6 +44,7 @@ model Dish {
 
   // add this line so Favorite.dish has an opposite side
   favorites Favorite[]
+  triedMeals TriedMeal[]
 }
 
 model Spin {
@@ -81,4 +85,17 @@ model Favorite {
 
   dishId String
   dish   Dish   @relation(fields: [dishId], references: [id])
+}
+
+model TriedMeal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  dishId    String
+  dish      Dish     @relation(fields: [dishId], references: [id])
+
+  dateTried DateTime @default(now())
+  notes     String?
+  rating    Int?
 }
