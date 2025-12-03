@@ -1,4 +1,4 @@
-export type VoiceActionId = 'logout' | 'openProfile' | 'goHome';
+export type VoiceActionId = 'logout' | 'openProfile' | 'goHome' | 'openCart';
 
 export interface VoiceAction {
   id: VoiceActionId;
@@ -9,6 +9,8 @@ export const ACTIONS: VoiceAction[] = [
   { id: 'logout', description: 'Log the user out' },
   { id: 'openProfile', description: 'Open the profile page' },
   { id: 'goHome', description: 'Go to the home screen' },
+  { id: 'openCart', description: 'Open the cart page' },
+  // calculate the total price of items in the cart
 ];
 
 export const ACTION_LIST_STRING = ACTIONS.map((action) => action.id).join(', ');

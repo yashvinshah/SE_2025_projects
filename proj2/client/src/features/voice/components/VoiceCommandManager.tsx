@@ -69,13 +69,23 @@ const VoiceCommandManager: React.FC = () => {
     navigate(dashboardPath);
   }, [navigate, user]);
 
+  const handleOpenCart = useCallback(() => {
+    if (!user || user.role !== 'customer') {
+      navigate('/login');
+      return;
+    }
+
+    navigate(`/customer/cart`);
+  }, [navigate, user]);
+
   const actionDeps = useMemo(
     () => ({
       logout: handleLogout,
       openProfile: handleOpenProfile,
       goHome: handleGoHome,
+      openCart: handleOpenCart,
     }),
-    [handleLogout, handleOpenProfile, handleGoHome]
+    [handleLogout, handleOpenProfile, handleGoHome, handleOpenCart]
   );
 
   const handleClassification = useCallback(

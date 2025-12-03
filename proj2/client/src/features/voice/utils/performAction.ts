@@ -4,6 +4,7 @@ interface PerformActionDeps {
   logout: () => void;
   openProfile: () => void;
   goHome: () => void;
+  openCart: () => void;
 }
 
 export function performAction(actionId: VoiceActionId, deps: PerformActionDeps) {
@@ -16,6 +17,9 @@ export function performAction(actionId: VoiceActionId, deps: PerformActionDeps) 
       break;
     case 'goHome':
       deps.goHome();
+      break;
+    case 'openCart':
+      deps.openCart();
       break;
     default: {
       const exhaustiveCheck: never = actionId;
