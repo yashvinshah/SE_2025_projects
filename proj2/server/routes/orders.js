@@ -35,7 +35,8 @@ router.post('/', [
   body('items').isArray({ min: 1 }),
   body('totalAmount').isNumeric(),
   body('deliveryAddress').isObject(),
-  body('customerId').notEmpty()
+  body('customerId').notEmpty(),
+  body('tipAmount').optional().isNumeric()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -43,7 +44,8 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { restaurantId, items, totalAmount, deliveryAddress, customerId } = req.body;
+    // const { restaurantId, items, totalAmount, deliveryAddress, customerId } = req.body;
+    const { restaurantId, items, totalAmount, deliveryAddress, customerId, tipAmount } = req.body;
 
     // Create order in Firebase
     const orderRef = db.collection('orders').doc();
@@ -53,6 +55,7 @@ router.post('/', [
       restaurantId,
       items,
       totalAmount,
+      tipAmount: tipAmount || 0,
       deliveryAddress,
       status: 'pending',
       createdAt: new Date(),
@@ -76,7 +79,7 @@ router.get('/customer', async (req, res) => {
   try {
     // Get customerId from query parameter
     const { customerId } = req.query;
-    
+
     if (!customerId) {
       return res.status(400).json({ error: 'Customer ID required' });
     }
@@ -85,7 +88,7 @@ router.get('/customer', async (req, res) => {
     const ordersSnapshot = await db.collection('orders')
       .where('customerId', '==', customerId)
       .get();
-    
+
     const orders = ordersSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -105,7 +108,7 @@ router.get('/restaurant', async (req, res) => {
   try {
     // Get restaurantId from query parameter
     const { restaurantId } = req.query;
-    
+
     if (!restaurantId) {
       return res.status(400).json({ error: 'Restaurant ID required' });
     }
@@ -114,7 +117,7 @@ router.get('/restaurant', async (req, res) => {
     const ordersSnapshot = await db.collection('orders')
       .where('restaurantId', '==', restaurantId)
       .get();
-    
+
     const orders = ordersSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -144,7 +147,7 @@ router.get('/delivery', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const mockOrder = {
       id,
       customerId: 'customer123',
@@ -246,7 +249,7 @@ router.post('/:id/rate', [
     }
 
     const orderData = orderDoc.data();
-    
+
     // Verify order belongs to customer and is delivered
     if (orderData.customerId !== customerId) {
       return res.status(403).json({ error: 'Order does not belong to this customer' });
