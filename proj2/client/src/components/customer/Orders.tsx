@@ -25,6 +25,7 @@ interface Order {
   createdAt: string;
   deliveredAt?: string;
   items: OrderItem[];
+  tipAmount?: number;
 
   customerLocation?: {
     lat: number;
@@ -273,7 +274,9 @@ const Orders: React.FC = () => {
                   <p>
                     <strong>Total:</strong> ${order.totalAmount.toFixed(2)}
                   </p>
-                  <p><strong>Tips:</strong> ${(order.tipAmount || 0).toFixed(2)}</p>
+                  <p>
+                    <strong>Tips:</strong> ${(order.tipAmount || 0).toFixed(2)}
+                  </p>
                   <p>
                     <strong>Items:</strong> {order.items.length}
                   </p>
@@ -407,19 +410,36 @@ const Orders: React.FC = () => {
                 {/* Order Info */}
                 <div className="info-section">
                   <h3>Order Information</h3>
-                  <p><strong>Status:</strong> <span className={`status status-${selectedOrder.status}`}>
-                    {selectedOrder.status.replace('_', ' ').toUpperCase()}
-                  </span></p>
-                  <p><strong>Subtotal:</strong> ${selectedOrder.totalAmount.toFixed(2)}</p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    <span className={`status status-${selectedOrder.status}`}>
+                      {selectedOrder.status.replace("_", " ").toUpperCase()}
+                    </span>
+                  </p>
+                  <p>
+                    <strong>Subtotal:</strong> $
+                    {selectedOrder.totalAmount.toFixed(2)}
+                  </p>
 
                   {/* DISPLAY TIP AMOUNT */}
-                  {selectedOrder.tipAmount > 0 && (
-                    <p><strong>Tip:</strong> ${selectedOrder.tipAmount.toFixed(2)}</p>
+                  {(selectedOrder.tipAmount ?? 0) > 0 && (
+                    <p>
+                      <strong>Tip:</strong> $
+                      {(selectedOrder.tipAmount ?? 0).toFixed(2)}
+                    </p>
                   )}
                   {/* DISPLAY GRAND TOTAL */}
-                  <p><strong>Total Paid:</strong> ${(selectedOrder.totalAmount + (selectedOrder.tipAmount || 0)).toFixed(2)}</p>
+                  <p>
+                    <strong>Total Paid:</strong> $
+                    {(
+                      selectedOrder.totalAmount + (selectedOrder.tipAmount || 0)
+                    ).toFixed(2)}
+                  </p>
 
-                  <p><strong>Ordered:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                  <p>
+                    <strong>Ordered:</strong>{" "}
+                    {new Date(selectedOrder.createdAt).toLocaleString()}
+                  </p>
                   {/* <div className="info-section">
                   <h3>Order Information</h3>
                   <p><strong>Status:</strong> <span className={`status status-${selectedOrder.status}`}>
@@ -548,7 +568,9 @@ const Orders: React.FC = () => {
                     onClick={submitRating}
                     disabled={rateOrderMutation.isPending}
                   >
-                    {rateOrderMutation.isPending ? 'Submitting...' : 'Submit Rating'}
+                    {rateOrderMutation.isPending
+                      ? "Submitting..."
+                      : "Submit Rating"}
                   </button>
                 </div>
               </div>
