@@ -13,6 +13,9 @@ class User {
     this.deliveryStatus =
       data.deliveryStatus || (data.role === "delivery" ? "free" : null);
     this.location = data.location || null; // GeoPoint
+
+    this.totalEarnings = data.totalEarnings || 0; 
+
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
   }
@@ -142,9 +145,24 @@ class User {
             longitude: this.location.longitude,
           }
         : null,
+      totalEarnings: this.totalEarnings,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
+  }
+  async updateEarnings(amount) {
+    try {
+      const userRef = db.collection('users').doc(this.id);
+      const newTotal = (this.totalEarnings || 0) + amount;
+      await userRef.update({
+        totalEarnings: newTotal,
+        updatedAt: new Date()
+      });
+      this.totalEarnings = newTotal;
+      return this;
+    } catch (error) {
+      throw new Error(`Failed to update earnings: ${error.message}`);
+    }
   }
 }
 

@@ -8,6 +8,7 @@ class Order {
     this.deliveryPartnerId = data.deliveryPartnerId || null;
     this.items = data.items; // Array of {menuItemId, quantity, price}
     this.totalAmount = data.totalAmount;
+    this.tipAmount = data.tipAmount || 0; // Add this line to include tip amount
     this.status = data.status; // 'pending', 'accepted', 'rejected', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled'
     this.deliveryAddress = data.deliveryAddress;
     this.specialInstructions = data.specialInstructions || '';
@@ -29,7 +30,7 @@ class Order {
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       await orderRef.set(orderDoc);
       return new Order(orderDoc);
     } catch (error) {
@@ -57,8 +58,8 @@ class Order {
         .where('customerId', '==', customerId)
         .orderBy('createdAt', 'desc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
@@ -73,8 +74,8 @@ class Order {
         .where('restaurantId', '==', restaurantId)
         .orderBy('createdAt', 'desc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
@@ -89,8 +90,8 @@ class Order {
         .where('deliveryPartnerId', '==', deliveryPartnerId)
         .orderBy('createdAt', 'desc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
@@ -112,14 +113,14 @@ class Order {
       }
 
       await orderRef.update(updateData);
-      
+
       // Update local instance
       this.status = newStatus;
       this.updatedAt = updateData.updatedAt;
       if (newStatus === 'delivered') {
         this.deliveredAt = updateData.deliveredAt;
       }
-      
+
       return this;
     } catch (error) {
       throw new Error(`Failed to update order status: ${error.message}`);
@@ -134,10 +135,10 @@ class Order {
         deliveryPartnerId,
         updatedAt: new Date()
       });
-      
+
       this.deliveryPartnerId = deliveryPartnerId;
       this.updatedAt = new Date();
-      
+
       return this;
     } catch (error) {
       throw new Error(`Failed to assign delivery partner: ${error.message}`);
@@ -149,21 +150,21 @@ class Order {
     try {
       const orderRef = db.collection('orders').doc(this.id);
       const currentRatings = this.ratings || {};
-      
+
       if (!currentRatings[raterRole]) {
         currentRatings[raterRole] = {};
       }
-      
+
       currentRatings[raterRole] = { ...currentRatings[raterRole], ...ratingData };
-      
+
       await orderRef.update({
         ratings: currentRatings,
         updatedAt: new Date()
       });
-      
+
       this.ratings = currentRatings;
       this.updatedAt = new Date();
-      
+
       return this;
     } catch (error) {
       throw new Error(`Failed to add rating: ${error.message}`);
@@ -177,8 +178,8 @@ class Order {
         .where('status', '==', 'pending')
         .orderBy('createdAt', 'asc')
         .get();
-      
-      return ordersSnapshot.docs.map(doc => 
+
+      return ordersSnapshot.docs.map(doc =>
         new Order({ id: doc.id, ...doc.data() })
       );
     } catch (error) {
@@ -195,6 +196,7 @@ class Order {
       deliveryPartnerId: this.deliveryPartnerId,
       items: this.items,
       totalAmount: this.totalAmount,
+      tipAmount: this.tipAmount,
       status: this.status,
       deliveryAddress: this.deliveryAddress,
       specialInstructions: this.specialInstructions,

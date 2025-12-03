@@ -273,6 +273,7 @@ const Orders: React.FC = () => {
                   <p>
                     <strong>Total:</strong> ${order.totalAmount.toFixed(2)}
                   </p>
+                  <p><strong>Tips:</strong> ${(order.tipAmount || 0).toFixed(2)}</p>
                   <p>
                     <strong>Items:</strong> {order.items.length}
                   </p>
@@ -348,7 +349,6 @@ const Orders: React.FC = () => {
                   >
                     Reorder
                   </button>
-
                   <button
                     className="btn btn-primary"
                     onClick={() => handleViewDetails(order)}
@@ -407,21 +407,26 @@ const Orders: React.FC = () => {
                 {/* Order Info */}
                 <div className="info-section">
                   <h3>Order Information</h3>
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    <span className={`status status-${selectedOrder.status}`}>
-                      {selectedOrder.status.replace("_", " ").toUpperCase()}
-                    </span>
-                  </p>
-                  <p>
-                    <strong>Total Amount:</strong> $
-                    {selectedOrder.totalAmount.toFixed(2)}
-                  </p>
-                  <p>
-                    <strong>Ordered:</strong>{" "}
-                    {new Date(selectedOrder.createdAt).toLocaleString()}
-                  </p>
+                  <p><strong>Status:</strong> <span className={`status status-${selectedOrder.status}`}>
+                    {selectedOrder.status.replace('_', ' ').toUpperCase()}
+                  </span></p>
+                  <p><strong>Subtotal:</strong> ${selectedOrder.totalAmount.toFixed(2)}</p>
 
+                  {/* DISPLAY TIP AMOUNT */}
+                  {selectedOrder.tipAmount > 0 && (
+                    <p><strong>Tip:</strong> ${selectedOrder.tipAmount.toFixed(2)}</p>
+                  )}
+                  {/* DISPLAY GRAND TOTAL */}
+                  <p><strong>Total Paid:</strong> ${(selectedOrder.totalAmount + (selectedOrder.tipAmount || 0)).toFixed(2)}</p>
+
+                  <p><strong>Ordered:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                  {/* <div className="info-section">
+                  <h3>Order Information</h3>
+                  <p><strong>Status:</strong> <span className={`status status-${selectedOrder.status}`}>
+                    {selectedOrder.status.replace('_', ' ').toUpperCase()}
+                  </span></p>
+                  <p><strong>Total Amount:</strong> ${selectedOrder.totalAmount.toFixed(2)}</p>
+                  <p><strong>Ordered:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p> */}
                   {selectedOrder.deliveredAt && (
                     <p>
                       <strong>Delivered:</strong>{" "}
@@ -538,8 +543,12 @@ const Orders: React.FC = () => {
                   >
                     Cancel
                   </button>
-                  <button className="btn btn-primary" onClick={submitRating}>
-                    Submit Rating
+                  <button
+                    className="btn btn-primary"
+                    onClick={submitRating}
+                    disabled={rateOrderMutation.isPending}
+                  >
+                    {rateOrderMutation.isPending ? 'Submitting...' : 'Submit Rating'}
                   </button>
                 </div>
               </div>

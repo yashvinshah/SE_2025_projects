@@ -15,6 +15,7 @@ interface Order {
     quantity: number;
   }>;
   totalAmount: number;
+  tipAmount: number;
   deliveryAddress: any;
   status: string;
   assignedAt: Date;
@@ -160,9 +161,9 @@ const OrderManagement: React.FC = () => {
   const readyOrders = assignedOrders.filter(order => order.status === 'ready');
   const outForDeliveryOrders = assignedOrders.filter(order => order.status === 'out_for_delivery');
   const completedOrders = assignedOrders.filter(order => order.status === 'delivered');
-  
+
   // Check if rider has any active orders (ready or out_for_delivery)
-  const hasActiveOrders = assignedOrders.some(order => 
+  const hasActiveOrders = assignedOrders.some(order =>
     ['ready', 'out_for_delivery'].includes(order.status)
   );
 
@@ -188,14 +189,14 @@ const OrderManagement: React.FC = () => {
               <div key={order.id} className="order-card available">
                 <div className="order-header">
                   <h3>Order #{order.id.slice(-6)}</h3>
-                  <span 
+                  <span
                     className="order-status"
                     style={{ color: getStatusColor(order.status) }}
                   >
                     {order.status.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
-                
+
                 <div className="order-items">
                   <h4>Items:</h4>
                   <ul>
@@ -212,7 +213,7 @@ const OrderManagement: React.FC = () => {
                 </div>
 
                 <div className="order-actions">
-                  <button 
+                  <button
                     className="btn btn-success"
                     onClick={() => {
                       console.log('Button clicked for order:', order.id);
@@ -220,8 +221,8 @@ const OrderManagement: React.FC = () => {
                     }}
                     disabled={acceptOrderMutation.isPending || hasActiveOrders}
                   >
-                    {acceptOrderMutation.isPending ? 'Accepting...' : 
-                     hasActiveOrders ? 'Complete current order first' : 'Accept Order'}
+                    {acceptOrderMutation.isPending ? 'Accepting...' :
+                      hasActiveOrders ? 'Complete current order first' : 'Accept Order'}
                   </button>
                 </div>
               </div>
@@ -241,14 +242,14 @@ const OrderManagement: React.FC = () => {
               <div key={order.id} className="order-card out-for-delivery">
                 <div className="order-header">
                   <h3>Order #{order.id.slice(-6)}</h3>
-                  <span 
+                  <span
                     className="order-status"
                     style={{ color: getStatusColor(order.status) }}
                   >
                     {order.status.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
-                
+
                 <div className="order-items">
                   <h4>Items:</h4>
                   <ul>
@@ -264,16 +265,23 @@ const OrderManagement: React.FC = () => {
                   <strong>Total: ${order.totalAmount.toFixed(2)}</strong>
                 </div>
 
+                {/* ADD TIP DISPLAY */}
+                {order.tipAmount > 0 && (
+                  <div className="order-tip">
+                    <p><strong>Tip Earned:</strong> ${order.tipAmount.toFixed(2)}</p>
+                  </div>
+                )}
+
                 <div className="delivery-address">
                   <h4>Delivery Address:</h4>
                   <p>
-                    {order.deliveryAddress.street}<br/>
+                    {order.deliveryAddress.street}<br />
                     {order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.zipCode}
                   </p>
                 </div>
 
                 <div className="order-actions">
-                  <button 
+                  <button
                     className="btn btn-primary"
                     onClick={() => handleDeliverOrder(order.id)}
                     disabled={deliverOrderMutation.isPending}
@@ -298,14 +306,14 @@ const OrderManagement: React.FC = () => {
               <div key={order.id} className="order-card completed">
                 <div className="order-header">
                   <h3>Order #{order.id.slice(-6)}</h3>
-                  <span 
+                  <span
                     className="order-status"
                     style={{ color: getStatusColor(order.status) }}
                   >
                     {order.status.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
-                
+
                 <div className="order-items">
                   <h4>Items:</h4>
                   <ul>
@@ -324,14 +332,20 @@ const OrderManagement: React.FC = () => {
                 <div className="delivery-address">
                   <h4>Delivery Address:</h4>
                   <p>
-                    {order.deliveryAddress.street}<br/>
+                    {order.deliveryAddress.street}<br />
                     {order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.zipCode}
                   </p>
                 </div>
 
                 <div className="order-time">
                   <p><strong>Delivered:</strong> {order.deliveredAt ? new Date(order.deliveredAt).toLocaleString() : 'Not delivered yet'}</p>
-                  <p><strong>Earnings:</strong> ${(order.totalAmount * 0.1).toFixed(2)} (10% commission)</p>
+
+                  {/* UPDATE EARNINGS CALCULATION */}
+                  <p>
+                    <strong>Earnings:</strong> $
+                    {((order.totalAmount * 0.1) + (order.tipAmount || 0)).toFixed(2)}
+                    (10% commission + Tip)
+                  </p>
                 </div>
               </div>
             ))}
