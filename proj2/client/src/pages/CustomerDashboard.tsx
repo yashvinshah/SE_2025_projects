@@ -1,13 +1,14 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../services/api';
-import CustomerHome from '../components/customer/CustomerHome';
-import RestaurantList from '../components/customer/RestaurantList';
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
 import Cart from '../components/customer/Cart';
+import CustomerHome from '../components/customer/CustomerHome';
 import Orders from '../components/customer/Orders';
 import Profile from '../components/customer/Profile';
+import RestaurantList from '../components/customer/RestaurantList';
+import { useAuth } from '../contexts/AuthContext';
+import VoiceCommandManager from '../features/voice/components/VoiceCommandManager';
+import { api } from '../services/api';
 import './Dashboard.css';
 
 const CustomerDashboard: React.FC = () => {
@@ -62,6 +63,8 @@ const CustomerDashboard: React.FC = () => {
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
+      
+      <VoiceCommandManager />
     </div>
   );
 };
