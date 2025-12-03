@@ -18,9 +18,13 @@ router.get(
       }
 
       const { customerId } = req.query;
-      const badges = await getCustomerBadges(customerId);
+      const { evaluatedBadges, stats, lastComputedAt } = await getCustomerBadges(customerId);
 
-      res.json({ badges });
+      res.json({
+        badges: evaluatedBadges,
+        stats,
+        lastComputedAt,
+      });
     } catch (error) {
       console.error('Failed to fetch customer badges:', error);
       res.status(500).json({ error: error.message });
@@ -39,9 +43,14 @@ router.post(
       }
 
       const { customerId } = req.body;
-      const badges = await updateCustomerBadges(customerId);
+      const { evaluatedBadges, stats, lastComputedAt } = await updateCustomerBadges(customerId);
 
-      res.json({ badges, message: 'Badges updated successfully' });
+      res.json({
+        badges: evaluatedBadges,
+        stats,
+        lastComputedAt,
+        message: 'Badges updated successfully',
+      });
     } catch (error) {
       console.error('Failed to update customer badges:', error);
       res.status(500).json({ error: error.message });

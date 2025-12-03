@@ -1,42 +1,42 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import './CustomerBadges.css';
 
-const SINGLE_ORDER_THRESHOLD = 30;
-const LIFETIME_SPEND_THRESHOLD = 200;
-const LOYAL_CUSTOMER_THRESHOLD = 150;
+type BadgeTierId = 'bronze' | 'silver' | 'gold' | 'diamond';
 
-type LoyalRestaurantMap = Record<string, {
-  restaurantName: string;
-  totalSpent: number;
-}>;
-
-interface BigSpenderBadge {
-  hasSingleOrder: boolean;
-  hasLifetimeSpend: boolean;
-  highestOrderAmount: number;
-  totalSpent: number;
+interface BadgeTierConfig {
+  tier: BadgeTierId;
+  threshold: number;
 }
 
-interface CustomerBadgesData {
-  streakDays: number;
-  bigSpender: BigSpenderBadge;
-  loyalRestaurants: LoyalRestaurantMap;
+interface EvaluatedBadge {
+  id: string;
+  label: string;
+  description: string;
+  icon?: string;
+  metric: string;
+  value: number;
+  currentTier: BadgeTierId | null;
+  nextTier: BadgeTierConfig | null;
+}
+
+interface BadgesResponse {
+  badges: EvaluatedBadge[];
   lastComputedAt: string | null;
 }
 
-const defaultBadges: CustomerBadgesData = {
-  streakDays: 0,
-  bigSpender: {
-    hasSingleOrder: false,
-    hasLifetimeSpend: false,
-    highestOrderAmount: 0,
-    totalSpent: 0,
-  },
-  loyalRestaurants: {},
+const defaultResponse: BadgesResponse = {
+  badges: [],
   lastComputedAt: null,
+};
+
+const tierEmojiMap: Record<BadgeTierId, string> = {
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🥇',
+  diamond: '💎',
 };
 
 const CustomerBadges: React.FC = () => {
@@ -45,21 +45,19 @@ const CustomerBadges: React.FC = () => {
   const queryClient = useQueryClient();
   const [isSyncing, setIsSyncing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const { data: badges = defaultBadges, isLoading, refetch, isFetching } = useQuery<CustomerBadgesData>({
+  const { data = defaultResponse, isLoading, refetch, isFetching } = useQuery<BadgesResponse>({
     queryKey: ['customerBadges', customerId],
     enabled: !!customerId,
     queryFn: async () => {
       const response = await api.get(`/badges?customerId=${customerId}`);
-      return response.data.badges as CustomerBadgesData;
+      return response.data as BadgesResponse;
     },
     staleTime: 1000 * 60 * 5,
   });
-
-  const loyalRestaurantBadges = useMemo(
-    () => Object.values(badges?.loyalRestaurants || {}),
-    [badges?.loyalRestaurants]
-  );
 
   const refreshBadges = useCallback(async () => {
     if (!customerId) return;
@@ -82,15 +80,88 @@ const CustomerBadges: React.FC = () => {
     refreshBadges();
   }, [customerId, refreshBadges]);
 
+  const lastUpdatedLabel = data?.lastComputedAt
+    ? new Date(data.lastComputedAt).toLocaleString()
+    : 'Not computed yet';
+
+  const sortedBadges = useMemo(
+    () => [...(data?.badges || [])].sort((a, b) => a.label.localeCompare(b.label)),
+    [data?.badges]
+  );
+
+  const updateScrollButtons = useCallback(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) {
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+      return;
+    }
+    const { scrollLeft, scrollWidth, clientWidth } = carousel;
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+  }, []);
+
+  const scrollByCards = useCallback((direction: 'left' | 'right') => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+    const scrollAmount = carousel.clientWidth * 0.8;
+    carousel.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  }, []);
+
+  useEffect(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+
+    updateScrollButtons();
+
+    const handleScroll = () => updateScrollButtons();
+    const handleResize = () => updateScrollButtons();
+
+    carousel.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      carousel.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [sortedBadges.length, updateScrollButtons]);
+
   if (!customerId) {
     return null;
   }
 
-  const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+  const renderProgress = (badge: EvaluatedBadge) => {
+    if (badge.nextTier) {
+      return `${badge.value} / ${badge.nextTier.threshold}`;
+    }
+    return `${badge.value}`;
+  };
 
-  const lastUpdatedLabel = badges?.lastComputedAt
-    ? new Date(badges.lastComputedAt).toLocaleString()
-    : 'Not computed yet';
+  const getBadgeCardClass = (badge: EvaluatedBadge) => {
+    if (badge.currentTier) {
+      return `badge-card unlocked tier-${badge.currentTier}`;
+    }
+    return 'badge-card locked';
+  };
+
+  const renderStatus = (badge: EvaluatedBadge) => {
+    if (badge.currentTier) {
+      const tierLabel = `${badge.currentTier.charAt(0).toUpperCase()}${badge.currentTier.slice(1)}`;
+      const emoji = tierEmojiMap[badge.currentTier];
+      return `${emoji ? `${emoji} ` : ''}${tierLabel}`;
+    }
+    return 'Locked';
+  };
+
+  const renderNextTier = (badge: EvaluatedBadge) => {
+    if (badge.nextTier) {
+      return `Next: ${badge.nextTier.tier} at ${badge.nextTier.threshold}`;
+    }
+    return 'Max tier achieved';
+  };
 
   return (
     <section className="customer-badges">
@@ -122,84 +193,48 @@ const CustomerBadges: React.FC = () => {
           <p>Loading your badge progress...</p>
         </div>
       ) : (
-        <>
-          <div className="badge-grid">
-            <div className={`badge-card ${badges.streakDays > 0 ? 'unlocked' : 'locked'}`}>
-              <div className="badge-icon">🔥</div>
-              <div className="badge-content">
-                <p className="badge-label">Order Streak</p>
-                <h3 className="badge-value">{badges.streakDays} day{badges.streakDays === 1 ? '' : 's'}</h3>
-                <p className="badge-description">Place at least one order every day to keep your streak alive.</p>
-              </div>
-              <div className="badge-status">
-                {badges.streakDays > 0 ? 'Unlocked' : 'Locked'}
-              </div>
-            </div>
-
-            <div className={`badge-card ${badges.bigSpender.hasSingleOrder ? 'unlocked' : 'locked'}`}>
-              <div className="badge-icon">💎</div>
-              <div className="badge-content">
-                <p className="badge-label">Big Spender (Single Order)</p>
-                <h3 className="badge-value">Highest: {formatCurrency(badges.bigSpender.highestOrderAmount)}</h3>
-                <p className="badge-description">
-                  Unlock by placing one order above {formatCurrency(SINGLE_ORDER_THRESHOLD)}.
-                </p>
-              </div>
-              <div className="badge-status">
-                {badges.bigSpender.hasSingleOrder ? 'Unlocked' : 'Locked'}
-              </div>
-            </div>
-
-            <div className={`badge-card ${badges.bigSpender.hasLifetimeSpend ? 'unlocked' : 'locked'}`}>
-              <div className="badge-icon">🏆</div>
-              <div className="badge-content">
-                <p className="badge-label">Big Spender (Lifetime)</p>
-                <h3 className="badge-value">Total: {formatCurrency(badges.bigSpender.totalSpent)}</h3>
-                <p className="badge-description">
-                  Spend {formatCurrency(LIFETIME_SPEND_THRESHOLD)} overall to earn this badge.
-                </p>
-              </div>
-              <div className="badge-status">
-                {badges.bigSpender.hasLifetimeSpend ? 'Unlocked' : 'Locked'}
-              </div>
-            </div>
-          </div>
-
-          <div className="loyal-section">
-            <div className="loyal-header">
-              <div>
-                <p className="badge-label">Loyal Customer</p>
-                <h3>Favorite Restaurants</h3>
-                <p className="badge-description">
-                  Spend at least {formatCurrency(LOYAL_CUSTOMER_THRESHOLD)} at a single restaurant to unlock a loyalty badge for them.
-                </p>
-              </div>
-            </div>
-            <div className="loyal-grid">
-              {loyalRestaurantBadges.length > 0 ? (
-                loyalRestaurantBadges.map((restaurant) => (
-                  <div key={restaurant.restaurantName} className="loyal-card unlocked">
-                    <div className="loyal-icon">🍽️</div>
-                    <div>
-                      <p className="loyal-name">{restaurant.restaurantName}</p>
-                      <p className="loyal-spend">Spent {formatCurrency(restaurant.totalSpent)}</p>
+        <div className="badge-carousel">
+          {sortedBadges.length === 0 ? (
+            <p className="badge-description">No badges yet. Start ordering to unlock rewards!</p>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="carousel-nav prev"
+                onClick={() => scrollByCards('left')}
+                disabled={!canScrollLeft}
+                aria-label="Scroll badges left"
+              >
+                ←
+              </button>
+              <div className="badge-carousel-track" ref={carouselRef}>
+                {sortedBadges.map((badge) => (
+                  <div key={badge.id} className={getBadgeCardClass(badge)}>
+                    {badge.icon && <div className="badge-icon">{badge.icon}</div>}
+                    <div className="badge-content">
+                      <p className="badge-label">{badge.label}</p>
+                      <h3 className="badge-value">{renderStatus(badge)}</h3>
+                      <p className="badge-description">{badge.description}</p>
+                      <p className="badge-progress">
+                        Progress: {renderProgress(badge)}
+                      </p>
+                      <p className="badge-next-tier">{renderNextTier(badge)}</p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="loyal-card locked">
-                  <div className="loyal-icon">🔒</div>
-                  <div>
-                    <p className="loyal-name">No loyal badges yet</p>
-                    <p className="loyal-spend">
-                      Support a restaurant with {formatCurrency(LOYAL_CUSTOMER_THRESHOLD)}+ spend to unlock.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="carousel-nav next"
+                onClick={() => scrollByCards('right')}
+                disabled={!canScrollRight}
+                aria-label="Scroll badges right"
+              >
+                →
+              </button>
+            </>
+          )}
+        </div>
       )}
     </section>
   );

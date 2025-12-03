@@ -26,6 +26,7 @@ const Orders: React.FC = () => {
 
   const rateOrderMutation = useMutation({
     mutationFn: async ({ orderId, rating, review }: { orderId: string; rating: number; review: string }) => {
+      console.log('[Orders] submitting rating', { orderId, rating, reviewLength: review.length });
       const response = await api.post(`/orders/${orderId}/rate`, {
         rating,
         review,
@@ -33,8 +34,17 @@ const Orders: React.FC = () => {
       });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['customerOrders'] });
+      if (user?.id) {
+        try {
+          console.log('[Orders] triggering badge recompute after review');
+          await api.post('/badges/update', { customerId: user.id });
+          await queryClient.invalidateQueries({ queryKey: ['customerBadges', user.id] });
+        } catch (error) {
+          console.error('[Orders] failed to refresh badges after review', error);
+        }
+      }
       setShowRatingModal(false);
       setRatingOrder(null);
       setRating(5);

@@ -77,10 +77,59 @@
   margin-bottom: 20px;
 }
 
-.badge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+.badge-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.badge-carousel-track {
+  display: flex;
   gap: 20px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+  flex: 1;
+}
+
+.badge-carousel-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.badge-carousel-track::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.badge-carousel-track::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.15);
+  border-radius: 999px;
+}
+
+.carousel-nav {
+  border: none;
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.carousel-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.carousel-nav:not(:disabled):hover {
+  background: rgba(37, 99, 235, 0.15);
+  transform: translateY(-1px);
 }
 
 .badge-card {
@@ -91,17 +140,35 @@
   gap: 16px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   position: relative;
+  min-width: 260px;
+  scroll-snap-align: start;
 }
 
+
 .badge-card.unlocked {
-  background: linear-gradient(135deg, #fce7f3, #e0f2fe);
-  border-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 20px 45px rgba(15, 23, 42, 0.08);
+  color: #fff;
 }
 
 .badge-card.locked {
   background: #f8fafc;
   color: #94a3b8;
+}
+
+/* richer, more dimensional gradients */
+.tier-bronze {
+  background: linear-gradient(135deg, #f6c79a 0%, #e08a45 50%, #a85b2a 100%);
+}
+
+.tier-silver {
+  background: linear-gradient(135deg, #f0f4fb 0%, #d0d6df 45%, #9aa0a7 100%);
+}
+
+.tier-gold {
+  background: linear-gradient(135deg, #fff7d0 0%, #ffd24d 45%, #d6a200 100%);
+}
+
+.tier-diamond {
+  background: linear-gradient(135deg, #b0e0e6, #5dade2, #85c1e9);
 }
 
 .badge-icon {
@@ -124,7 +191,7 @@
 
 .badge-description {
   margin: 0;
-  color: #475569;
+  color: inherit;
 }
 
 .badge-status {
@@ -214,5 +281,11 @@
   }
   .customer-badges h2 {
     font-size: 1.6rem;
+  }
+  .carousel-nav {
+    display: none;
+  }
+  .badge-carousel-track {
+    gap: 16px;
   }
 }
