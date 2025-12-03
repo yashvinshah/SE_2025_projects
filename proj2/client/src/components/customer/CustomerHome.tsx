@@ -1,11 +1,12 @@
-import React, { useState, useCallback } from "react";
+import { useQuery } from '@tanstack/react-query';
+import React, { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../../services/api";
-import "./CustomerHome.css";
-
-import { useAuth } from "../../contexts/AuthContext";
 import LocationPickerMap from "../../components/LocationPickerMap";
+import { useAuth } from "../../contexts/AuthContext";
+import { api } from "../../services/api";
+import CustomerBadges from './CustomerBadges';
+import './CustomerHome.css';
+
 
 interface StructuredAddress {
   street: string;
@@ -96,7 +97,7 @@ const CustomerHome: React.FC = () => {
 
           geocoder.geocode(
             { location: { lat: latitude, lng: longitude } },
-            async (results, status) => {
+            async (results:any, status:any) => {
               if (status !== "OK" || !results || !results[0]) {
                 alert("Unable to get address from your location.");
                 return;
@@ -117,7 +118,7 @@ const CustomerHome: React.FC = () => {
                 let state = "";
                 let zip = "";
 
-                r.address_components.forEach((comp) => {
+                r.address_components.forEach((comp:any) => {
                   if (comp.types.includes("street_number"))
                     streetNumber = comp.long_name;
                   if (comp.types.includes("route")) route = comp.long_name;
@@ -186,7 +187,7 @@ const CustomerHome: React.FC = () => {
 
     const gc = new g.maps.Geocoder();
 
-    gc.geocode({ address: addressString }, (results, status) => {
+    gc.geocode({ address: addressString }, (results:any, status:any) => {
       if (status !== "OK" || !results || !results[0]) {
         alert("Unable to find that address.");
         return;
@@ -240,6 +241,27 @@ const CustomerHome: React.FC = () => {
 
   return (
     <div className="customer-home">
+      <CustomerBadges />
+      <div className="quick-actions">
+        <Link to="/customer/restaurants" className="action-card">
+          <div className="action-icon">🍽️</div>
+          <h3>Browse Restaurants</h3>
+          <p>Discover amazing local restaurants</p>
+        </Link>
+        
+        <Link to="/customer/cart" className="action-card">
+          <div className="action-icon">🛒</div>
+          <h3>View Cart</h3>
+          <p>Check your current order</p>
+        </Link>
+        
+        <Link to="/customer/orders" className="action-card">
+          <div className="action-icon">📦</div>
+          <h3>Order History</h3>
+          <p>Track your past orders</p>
+        </Link>
+      </div>
+      
       <div className="manual-address-inputs">
         <input
           type="text"
@@ -361,7 +383,7 @@ const CustomerHome: React.FC = () => {
       )}
 
       {/* Nearby Restaurants：依距離排序（由後端處理） */}
-      <div className="ㄏ-restaurants">
+      <div className="featured-restaurants">
         <h2>Featured Restaurants</h2>
         <div className="restaurants-grid">
           {restaurants?.map((restaurant: any) => (

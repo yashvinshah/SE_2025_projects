@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
+import DeliveryMap from "../../components/delivery/DeliveryMap";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { api } from "../../services/api";
-import DeliveryMap from "../../components/delivery/DeliveryMap";
 import "./Orders.css";
 
 /* -------------------------------
@@ -153,8 +153,17 @@ const Orders: React.FC = () => {
       });
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customerOrders"] });
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ['customerOrders'] });
+      if (user?.id) {
+        try {
+          console.log('[Orders] triggering badge recompute after review');
+          await api.post('/badges/update', { customerId: user.id });
+          await queryClient.invalidateQueries({ queryKey: ['customerBadges', user.id] });
+        } catch (error) {
+          console.error('[Orders] failed to refresh badges after review', error);
+        }
+      }
       setShowRatingModal(false);
       setRatingOrder(null);
       setRating(5);
