@@ -7,16 +7,26 @@ const ACTIONS = [
   { id: 'logout', description: 'Log the user out' },
   { id: 'openProfile', description: 'Open the profile page' },
   { id: 'goHome', description: 'Go to the home screen' },
+  { id: 'openCart', description: 'Open the cart page' },
+  { id: 'calculateTotalPrice', description: 'Calculate the total price of items in the cart' },
 ];
 
 const ACTION_IDS = ACTIONS.map((action) => action.id);
 const ACTION_SET = new Set(ACTION_IDS);
 
-const buildPrompt = (userText) =>
-  `You are an action classifier for our app.
-The user said: ${userText}.
-Choose EXACTLY ONE action from this list: [${ACTION_IDS.join(', ')}].
-Respond ONLY with the action id.`;
+const buildPrompt = (userText) => {
+  const safeText = String(userText || '').replace(/\s+/g, ' ').trim();
+  const actionsText = ACTIONS.map(a => `${a.id}: ${a.description}`).join('\n');
+
+  return `You are an action classifier for our app.
+The user said: "${safeText}"
+
+Available actions (id: description):
+${actionsText}
+
+Choose EXACTLY ONE action id from the list above that best matches the user's intent.
+Respond with ONLY the action id (no quotes, no punctuation, no explanation). If multiple actions could apply, pick the single most appropriate one.`;
+};
 
 router.post('/classify', async (req, res) => {
   try {
@@ -37,13 +47,15 @@ router.post('/classify', async (req, res) => {
 
     const url = `${baseUrl}/${apiVersion}/models/${model}:generateContent`;
 
+    const prompt = buildPrompt(userText);
+    console.log('PROMPT:', prompt);
     const response = await axios.post(
       url,
       {
         contents: [
           {
             role: 'user',
-            parts: [{ text: buildPrompt(userText) }],
+            parts: [{ text: prompt }],
           },
         ],
       },
@@ -54,6 +66,7 @@ router.post('/classify', async (req, res) => {
 
     const actionId =
       response?.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    console.log('ACTION ID:', actionId);
 
     if (!actionId || !ACTION_SET.has(actionId)) {
       return res

@@ -8,6 +8,7 @@ interface VoiceModalProps {
   error: string | null;
   isListening: boolean;
   isClassifying: boolean;
+  resultMessage: string | null;
   onStart: () => void;
   onStop: () => void;
   onClose: () => void;
@@ -20,6 +21,7 @@ const VoiceModal: React.FC<VoiceModalProps> = ({
   error,
   isListening,
   isClassifying,
+  resultMessage,
   onStart,
   onStop,
   onClose,
@@ -48,7 +50,9 @@ const VoiceModal: React.FC<VoiceModalProps> = ({
         </div>
 
         <div className="voice-modal-text">
-          {transcript || (isListening ? 'Please speak…' : 'Press the button to start recording.')}
+          {resultMessage ||
+            transcript ||
+            (isListening ? 'Please speak…' : 'Press the button to start recording.')}
         </div>
 
         {interimTranscript && (

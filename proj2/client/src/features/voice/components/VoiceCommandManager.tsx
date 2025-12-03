@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useCart } from '../../../contexts/CartContext';
 import { classifyWithGemini } from '../api/gemini';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { VoiceAction, getActionById } from '../utils/actions';
@@ -12,12 +13,20 @@ import VoiceModal from './VoiceModal';
 const VoiceCommandManager: React.FC = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { items, getTotalPrice } = useCart();
 
   const [isVoiceModalOpen, setVoiceModalOpen] = useState(false);
   const [isConfirmationOpen, setConfirmationOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState<VoiceAction | null>(null);
   const [isClassifying, setIsClassifying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
+
+  const cartItemCount = items.length;
+  const currencyFormatter = useMemo(
+    () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
+    []
+  );
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -78,14 +87,31 @@ const VoiceCommandManager: React.FC = () => {
     navigate(`/customer/cart`);
   }, [navigate, user]);
 
+  const handleCalculateTotalPrice = useCallback(() => {
+    if (!user || user.role !== 'customer') {
+      navigate('/login');
+      return;
+    }
+
+    if (cartItemCount === 0) {
+      setResultMessage('Your cart is currently empty.');
+    } else {
+      const formattedTotal = currencyFormatter.format(getTotalPrice());
+      setResultMessage(`Your cart total is ${formattedTotal}.`);
+    }
+
+    setVoiceModalOpen(true);
+  }, [cartItemCount, currencyFormatter, getTotalPrice, navigate, user]);
+
   const actionDeps = useMemo(
     () => ({
       logout: handleLogout,
       openProfile: handleOpenProfile,
       goHome: handleGoHome,
       openCart: handleOpenCart,
+      calculateTotalPrice: handleCalculateTotalPrice
     }),
-    [handleLogout, handleOpenProfile, handleGoHome, handleOpenCart]
+    [handleLogout, handleOpenProfile, handleGoHome, handleOpenCart, handleCalculateTotalPrice]
   );
 
   const handleClassification = useCallback(
@@ -148,6 +174,7 @@ const VoiceCommandManager: React.FC = () => {
       return;
     }
 
+    setResultMessage(null);
     setVoiceModalOpen(true);
     if (!isListening) {
       beginListening();
@@ -156,6 +183,7 @@ const VoiceCommandManager: React.FC = () => {
 
   const handleCloseVoiceModal = useCallback(() => {
     setVoiceModalOpen(false);
+    setResultMessage(null);
     endListening();
   }, [endListening]);
 
@@ -197,6 +225,7 @@ const VoiceCommandManager: React.FC = () => {
         error={error}
         isListening={isListening}
         isClassifying={isClassifying}
+        resultMessage={resultMessage}
         onStart={beginListening}
         onStop={endListening}
         onClose={handleCloseVoiceModal}
