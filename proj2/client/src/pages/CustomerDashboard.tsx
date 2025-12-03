@@ -7,6 +7,7 @@ import Orders from '../components/customer/Orders';
 import Profile from '../components/customer/Profile';
 import RestaurantList from '../components/customer/RestaurantList';
 import { useAuth } from '../contexts/AuthContext';
+import VoiceCommandManager from '../features/voice/components/VoiceCommandManager';
 import { api } from '../services/api';
 import './Dashboard.css';
 
@@ -62,6 +63,8 @@ const CustomerDashboard: React.FC = () => {
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
+      
+      <VoiceCommandManager />
     </div>
   );
 };
