@@ -1,18 +1,17 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 
 // Components
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import CustomerDashboard from './pages/CustomerDashboard';
+import DeliveryDashboard from './pages/DeliveryDashboard';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import CustomerDashboard from './pages/CustomerDashboard';
 import RestaurantDashboard from './pages/RestaurantDashboard';
-import DeliveryDashboard from './pages/DeliveryDashboard';
-import ProtectedRoute from './components/ProtectedRoute';
+import SignupPage from './pages/SignupPage';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -69,6 +68,7 @@ function App() {
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
+              
             </div>
           </Router>
         </CartProvider>

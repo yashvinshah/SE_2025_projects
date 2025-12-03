@@ -4,16 +4,14 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 require("dotenv").config();
 
-const authRoutes = require("./routes/auth");
-const customerRoutes = require("./routes/customer");
-const restaurantRoutes = require("./routes/restaurant");
-const deliveryRoutes = require("./routes/delivery");
-const orderRoutes = require("./routes/orders");
-const {
-  router: pointsRoutes,
-  awardPointsForOrder,
-} = require("./routes/points");
-const donationRoutes = require("./routes/donations");
+const authRoutes = require('./routes/auth');
+const customerRoutes = require('./routes/customer');
+const restaurantRoutes = require('./routes/restaurant');
+const deliveryRoutes = require('./routes/delivery');
+const orderRoutes = require('./routes/orders');
+const { router: pointsRoutes, awardPointsForOrder } = require('./routes/points');
+const donationRoutes = require('./routes/donations');
+const voiceRoutes = require('./routes/voice');
 const users = require("./routes/users");
 
 const app = express();
@@ -32,13 +30,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/customer", customerRoutes);
-app.use("/api/restaurant", restaurantRoutes);
-app.use("/api/delivery", deliveryRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/points", pointsRoutes);
-app.use("/api/donations", donationRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/customer', customerRoutes);
+app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/delivery', deliveryRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/points', pointsRoutes);
+app.use('/api/donations', donationRoutes);
+app.use('/api/voice', voiceRoutes);
 app.use("/api/users", users);
 
 // Health check endpoint
