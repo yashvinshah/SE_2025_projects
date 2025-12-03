@@ -19,12 +19,12 @@ router.post('/profile', [
 
     const { email, password } = req.body;
     const user = await User.findByEmail(email);
-    
+
     if (!user || user.password !== password || user.role !== 'delivery') {
       return res.status(401).json({ error: 'Invalid credentials or not a delivery rider' });
     }
 
-    res.json({ 
+    res.json({
       user: user.toJSON()
     });
   } catch (error) {
@@ -37,7 +37,7 @@ router.post('/profile', [
 router.get('/orders', async (req, res) => {
   try {
     const { riderId } = req.query;
-    
+
     if (!riderId) {
       return res.status(400).json({ error: 'Rider ID required' });
     }
@@ -46,7 +46,7 @@ router.get('/orders', async (req, res) => {
     const ordersSnapshot = await db.collection('orders')
       .where('deliveryPartnerId', '==', riderId)
       .get();
-    
+
     const orders = ordersSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -81,7 +81,7 @@ router.post('/accept/:orderId', async (req, res) => {
 
     const orderData = orderDoc.data();
     console.log(`Order data: status=${orderData.status}, deliveryPartnerId=${orderData.deliveryPartnerId}`);
-    
+
     // Check if order is still available for assignment
     if (orderData.deliveryPartnerId && orderData.deliveryPartnerId !== null) {
       console.log(`Order ${orderId} already assigned to ${orderData.deliveryPartnerId}`);
@@ -105,7 +105,7 @@ router.post('/accept/:orderId', async (req, res) => {
       .where('deliveryPartnerId', '==', riderId)
       .where('status', 'in', ['ready', 'out_for_delivery'])
       .get();
-    
+
     if (!activeOrdersSnapshot.empty) {
       console.log(`Rider ${riderId} already has ${activeOrdersSnapshot.docs.length} active orders`);
       return res.status(400).json({ error: 'You already have an active order. Complete it before accepting another.' });
@@ -211,10 +211,16 @@ router.post('/deliver/:orderId', async (req, res) => {
     if (!orderDoc.exists) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    
-    const orderData = orderDoc.data();
 
-    // Update order status
+    const orderData = orderDoc.data();
+    const orderTotal = orderData.totalAmount || 0; // The total paid by the customer
+    const tipAmount = orderData.tipAmount || 0; // <--- GET THE TIP AMOUNT
+
+    // 1. Calculate rider commission (e.g., 10% of total amount + 100% of tip)
+    const baseCommission = orderTotal * 0.10;
+    const riderPayout = baseCommission + tipAmount; // <--- CALCULATE TOTAL PAYOUT
+
+    // 2. Update order status
     const orderRef = db.collection('orders').doc(orderId);
     await orderRef.update({
       status: 'delivered',
@@ -222,28 +228,33 @@ router.post('/deliver/:orderId', async (req, res) => {
       updatedAt: new Date()
     });
 
-    // Award points to customer
-    await awardPointsForOrder(orderData.customerId, orderData.totalAmount);
+    // 3. Award points to customer
+    await awardPointsForOrder(orderData.customerId, orderTotal); // Use orderTotal for points
 
-    // Check if rider has other active orders before setting to free
+    // 4. CREDIT RIDER EARNINGS WITH COMMISSION AND TIP
     const rider = await User.findById(riderId);
     if (rider) {
-      // Check if rider has other active orders
+      await rider.updateEarnings(riderPayout); // <--- CREDIT RIDER
+
+      // Check if rider has other active orders before setting to free
       const activeOrdersSnapshot = await db.collection('orders')
         .where('deliveryPartnerId', '==', riderId)
         .where('status', 'in', ['ready', 'out_for_delivery'])
         .get();
-      
+
       // Only set to free if no other active orders
       if (activeOrdersSnapshot.empty) {
         await rider.updateDeliveryStatus('free');
       }
+    } else {
+      console.warn(`Rider ${riderId} not found during delivery payout.`);
     }
 
     res.json({
       message: 'Order delivered successfully',
       orderId: orderId,
-      status: 'delivered'
+      status: 'delivered',
+      payout: riderPayout // Optional: send payout amount in response
     });
   } catch (error) {
     console.error('Deliver order error:', error);
@@ -255,15 +266,15 @@ router.post('/deliver/:orderId', async (req, res) => {
 router.get('/available', async (req, res) => {
   try {
     console.log('Fetching available orders...');
-    
+
     // Get orders that are ready but not yet assigned
     // We need to get all ready orders and filter out those with deliveryPartnerId
     const ordersSnapshot = await db.collection('orders')
       .where('status', '==', 'ready')
       .get();
-    
+
     console.log(`Found ${ordersSnapshot.docs.length} orders with status 'ready'`);
-    
+
     // Filter orders that don't have a deliveryPartnerId or have it as null
     const orders = ordersSnapshot.docs
       .map(doc => {

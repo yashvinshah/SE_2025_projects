@@ -11,6 +11,7 @@ const Cart: React.FC = () => {
   const queryClient = useQueryClient();
   const [usePoints, setUsePoints] = useState(false);
   const [pointsToUse, setPointsToUse] = useState(0);
+  const [tipAmount, setTipAmount] = useState(0);
 
   const { data: points } = useQuery({
     queryKey: ['customerPoints', user?.id],
@@ -27,7 +28,7 @@ const Cart: React.FC = () => {
     queryKey: ['discountInfo', pointsToUse, user?.id],
     queryFn: async () => {
       if (pointsToUse <= 0 || !user?.id) return { discountAmount: 0, maxDiscount: 0 };
-      const response = await api.post('/points/calculate-discount', { 
+      const response = await api.post('/points/calculate-discount', {
         points: pointsToUse,
         customerId: user.id
       });
@@ -104,18 +105,25 @@ const Cart: React.FC = () => {
 
       // For now, place one order per restaurant
       Object.values(restaurantGroups).forEach((group: any) => {
-        const totalAmount = group.items.reduce((sum: number, item: any) => 
+        const totalAmount = group.items.reduce((sum: number, item: any) =>
           sum + (item.price * item.quantity), 0
         );
-        
-        const finalAmount = usePoints && discountInfo ? 
+
+        // The total amount calculated here is the subtotal (items only)
+
+        const finalAmount = usePoints && discountInfo ?
           Math.max(0, totalAmount - discountInfo.discountAmount) : totalAmount;
+
+        // NOTE: The backend 'totalAmount' field should ideally store the final amount including the tip.
+        // Based on your backend, 'totalAmount' seems to be the order subtotal (before tip/discount).
+        // Let's ensure the backend saves the tip separately.
 
         placeOrderMutation.mutate({
           restaurantId: group.restaurantId,
           customerId: user.id,
           items: group.items,
-          totalAmount: finalAmount,
+          totalAmount: finalAmount, // Subtotal minus discount
+          tipAmount: tipAmount, // <--- ADD THE TIP AMOUNT
           deliveryAddress: user.profile?.address || {
             street: '123 Main St',
             city: 'City',
@@ -146,7 +154,7 @@ const Cart: React.FC = () => {
   return (
     <div className="cart">
       <h1>Shopping Cart</h1>
-      
+
       <div className="cart-items">
         {items.map((item) => (
           <div key={item.id} className="cart-item">
@@ -157,21 +165,21 @@ const Cart: React.FC = () => {
             </div>
             <div className="item-controls">
               <div className="quantity-controls">
-                <button 
+                <button
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   className="quantity-btn"
                 >
                   -
                 </button>
                 <span className="quantity">{item.quantity}</span>
-                <button 
+                <button
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   className="quantity-btn"
                 >
                   +
                 </button>
               </div>
-              <button 
+              <button
                 onClick={() => removeItem(item.id)}
                 className="remove-btn"
               >
@@ -215,6 +223,23 @@ const Cart: React.FC = () => {
         </div>
       )}
 
+      {/* Tip Input Section */}
+      <div className="tip-section">
+        <h3>Add Tip for Delivery Partner</h3>
+        <div className="tip-input-controls">
+          <label htmlFor="tip-amount">Tip Amount ($):</label>
+          <input
+            id="tip-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            value={tipAmount.toFixed(2)}
+            onChange={(e) => setTipAmount(parseFloat(e.target.value) || 0)}
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
       <div className="cart-summary">
         <div className="summary-row">
           <span>Subtotal:</span>
@@ -226,10 +251,19 @@ const Cart: React.FC = () => {
             <span>-${discountAmount.toFixed(2)}</span>
           </div>
         )}
-        <div className="summary-row total">
-          <span>Total:</span>
-          <span>${finalPrice.toFixed(2)}</span>
+
+        {/* ADD TIP AMOUNT TO SUMMARY */}
+        <div className="summary-row tip">
+          <span>Tip:</span>
+          <span>+${tipAmount.toFixed(2)}</span>
         </div>
+        {/* UPDATE TOTAL CALCULATION and DISPLAY */}
+        {/* Update local calculation: Final price now includes tip */}
+        <div className="summary-row total">
+          <span>Total Payable:</span>
+          <span>${(finalPrice + tipAmount).toFixed(2)}</span>
+        </div>
+
         <div className="summary-row">
           <span>Items:</span>
           <span>{getTotalItems()}</span>
@@ -237,13 +271,13 @@ const Cart: React.FC = () => {
       </div>
 
       <div className="cart-actions">
-        <button 
+        <button
           onClick={clearCart}
           className="btn btn-secondary"
         >
           Clear Cart
         </button>
-        <button 
+        <button
           onClick={handlePlaceOrder}
           className="btn btn-primary"
           disabled={placeOrderMutation.isPending}
