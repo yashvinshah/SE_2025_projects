@@ -55,11 +55,11 @@ const Orders: React.FC = () => {
     );
   }
 
-  const activeOrders = orders?.filter((order: any) => 
+  const activeOrders = orders?.filter((order: any) =>
     ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(order.status)
   ) || [];
-  
-  const completedOrders = orders?.filter((order: any) => 
+
+  const completedOrders = orders?.filter((order: any) =>
     ['delivered', 'cancelled'].includes(order.status)
   ) || [];
 
@@ -110,7 +110,7 @@ const Orders: React.FC = () => {
   return (
     <div className="orders">
       <h1>Your Orders</h1>
-      
+
       {/* Active Orders */}
       {activeOrders.length > 0 && (
         <div className="orders-section">
@@ -125,20 +125,25 @@ const Orders: React.FC = () => {
                   </span>
                 </div>
                 <div className="order-details">
-                  <p><strong>Total:</strong> ${order.totalAmount.toFixed(2)}</p>
+
+                  {/* CALCULATE GRAND TOTAL = Subtotal + Tip */}
+                  <p><strong>Total:</strong> ${(order.totalAmount + (order.tipAmount || 0)).toFixed(2)}</p>
+                  <p><strong>Tips:</strong> ${(order.tipAmount || 0).toFixed(2)}</p>
                   <p><strong>Items:</strong> {order.items.length} item(s)</p>
+
+
                   <p><strong>Ordered:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="order-actions">
                   <div className="order-actions">
-                    <button 
-                      className="btn btn-primary" 
+                    <button
+                      className="btn btn-primary"
                       onClick={() => handleViewDetails(order)}
                     >
                       View Details
                     </button>
-                    <button 
-                      className="btn btn-primary" 
+                    <button
+                      className="btn btn-primary"
                       onClick={() => handleReorder(order)}
                     >
                       Reorder
@@ -159,9 +164,8 @@ const Orders: React.FC = () => {
             {completedOrders.map((order: any) => (
               <div
                 key={order.id}
-                className={`order-card ${
-                  order.status === 'cancelled' ? 'cancelled' : 'completed'
-                }`}
+                className={`order-card ${order.status === 'cancelled' ? 'cancelled' : 'completed'
+                  }`}
               >
                 <div className="order-header">
                   <h3>Order #{order.id.slice(-6)}</h3>
@@ -178,20 +182,20 @@ const Orders: React.FC = () => {
                   )}
                 </div>
                 <div className="order-actions">
-                   <button 
-                      className="btn btn-primary" 
-                      onClick={() => handleReorder(order)}
-                    >
-                      Reorder
-                    </button>
-                  <button 
-                    className="btn btn-primary" 
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleReorder(order)}
+                  >
+                    Reorder
+                  </button>
+                  <button
+                    className="btn btn-primary"
                     onClick={() => handleViewDetails(order)}
                   >
                     View Details
                   </button>
                   {order.status === 'delivered' && !order.ratings?.customer && (
-                    <button 
+                    <button
                       className="btn btn-primary"
                       onClick={() => handleRateOrder(order)}
                     >
@@ -229,7 +233,7 @@ const Orders: React.FC = () => {
               <h2>Order Details #{selectedOrder.id.slice(-6)}</h2>
               <button className="close-btn" onClick={closeOrderDetails}>×</button>
             </div>
-            
+
             <div className="modal-body">
               <div className="order-info">
                 <div className="info-section">
@@ -237,8 +241,23 @@ const Orders: React.FC = () => {
                   <p><strong>Status:</strong> <span className={`status status-${selectedOrder.status}`}>
                     {selectedOrder.status.replace('_', ' ').toUpperCase()}
                   </span></p>
-                  <p><strong>Total Amount:</strong> ${selectedOrder.totalAmount.toFixed(2)}</p>
+                  <p><strong>Subtotal:</strong> ${selectedOrder.totalAmount.toFixed(2)}</p>
+
+                  {/* DISPLAY TIP AMOUNT */}
+                  {selectedOrder.tipAmount > 0 && (
+                    <p><strong>Tip:</strong> ${selectedOrder.tipAmount.toFixed(2)}</p>
+                  )}
+                  {/* DISPLAY GRAND TOTAL */}
+                  <p><strong>Total Paid:</strong> ${(selectedOrder.totalAmount + (selectedOrder.tipAmount || 0)).toFixed(2)}</p>
+
                   <p><strong>Ordered:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                  {/* <div className="info-section">
+                  <h3>Order Information</h3>
+                  <p><strong>Status:</strong> <span className={`status status-${selectedOrder.status}`}>
+                    {selectedOrder.status.replace('_', ' ').toUpperCase()}
+                  </span></p>
+                  <p><strong>Total Amount:</strong> ${selectedOrder.totalAmount.toFixed(2)}</p>
+                  <p><strong>Ordered:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p> */}
                   {selectedOrder.deliveredAt && (
                     <p><strong>Delivered:</strong> {new Date(selectedOrder.deliveredAt).toLocaleString()}</p>
                   )}
@@ -261,7 +280,7 @@ const Orders: React.FC = () => {
                   <div className="info-section">
                     <h3>Delivery Address</h3>
                     <p>
-                      {selectedOrder.deliveryAddress.street}<br/>
+                      {selectedOrder.deliveryAddress.street}<br />
                       {selectedOrder.deliveryAddress.city}, {selectedOrder.deliveryAddress.state} {selectedOrder.deliveryAddress.zipCode}
                     </p>
                   </div>
@@ -280,7 +299,7 @@ const Orders: React.FC = () => {
               <h2>Rate Your Order #{ratingOrder.id.slice(-6)}</h2>
               <button className="close-btn" onClick={closeRatingModal}>×</button>
             </div>
-            
+
             <div className="modal-body">
               <div className="rating-form">
                 <div className="rating-section">
@@ -312,13 +331,13 @@ const Orders: React.FC = () => {
                 </div>
 
                 <div className="modal-actions">
-                  <button 
+                  <button
                     className="btn btn-secondary"
                     onClick={closeRatingModal}
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     className="btn btn-primary"
                     onClick={submitRating}
                     disabled={rateOrderMutation.isPending}
