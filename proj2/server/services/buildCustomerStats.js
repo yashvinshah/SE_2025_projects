@@ -185,6 +185,8 @@ async function buildCustomerStats(customerId) {
   let lifetimeSpend = 0;
   let highValueOrdersCount = 0;
   let bigFeastOrdersCount = 0;
+  let totalTipAmount = 0;
+  let tipOrdersCount = 0;
 
   orders.forEach((order) => {
     if (order.restaurantId) {
@@ -195,6 +197,12 @@ async function buildCustomerStats(customerId) {
     lifetimeSpend += totalAmount;
     if (totalAmount >= HIGH_VALUE_ORDER_THRESHOLD) {
       highValueOrdersCount += 1;
+    }
+
+    const tipAmount = Number(order.tipAmount) || 0;
+    totalTipAmount += tipAmount;
+    if (tipAmount > 0) {
+      tipOrdersCount += 1;
     }
 
     const itemQuantity = sumItemQuantity(order.items);
@@ -251,6 +259,8 @@ async function buildCustomerStats(customerId) {
     uniqueMenuItemsCount: menuItemIds.size,
     longReviewsCount,
     reviewedRestaurantsCount: reviewedRestaurants.size,
+    totalTipAmount: Number(totalTipAmount.toFixed(2)),
+    tipOrdersCount,
   };
 
   console.log('[buildCustomerStats] stats computed', {
@@ -261,6 +271,8 @@ async function buildCustomerStats(customerId) {
     inlineReviewsCount: inlineReviews.length,
     oneStarReviewsCount,
     fiveStarReviewsCount,
+    totalTipAmount,
+    tipOrdersCount,
   });
 
   return stats;

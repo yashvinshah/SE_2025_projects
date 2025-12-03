@@ -22,4 +22,6 @@ export interface CustomerStats {
   uniqueMenuItemsCount: number;
   longReviewsCount: number;
   reviewedRestaurantsCount: number;
+  totalTipAmount: number;
+  tipOrdersCount: number;
 }

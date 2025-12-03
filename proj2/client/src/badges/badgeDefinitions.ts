@@ -218,4 +218,30 @@ export const badgeDefinitions: BadgeDefinition[] = [
       { tier: 'diamond', threshold: 20 },
     ],
   },
+  {
+    id: 'total_tip_amount',
+    label: 'Master Tipper',
+    description: "You've shown exceptional generosity with your tips!",
+    icon: '💸',
+    metric: 'totalTipAmount',
+    tiers: [
+      { tier: 'bronze', threshold: 5 },
+      { tier: 'silver', threshold: 20 },
+      { tier: 'gold', threshold: 50 },
+      { tier: 'diamond', threshold: 100 },
+    ],
+  },
+  {
+    id: 'tip_orders_count',
+    label: 'Generous Customer',
+    description: 'You frequently tip your delivery partners!',
+    icon: '🤝',
+    metric: 'tipOrdersCount',
+    tiers: [
+      { tier: 'bronze', threshold: 1 },
+      { tier: 'silver', threshold: 5 },
+      { tier: 'gold', threshold: 10 },
+      { tier: 'diamond', threshold: 20 },
+    ],
+  },
 ];
