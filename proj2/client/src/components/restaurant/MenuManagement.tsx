@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
-import './MenuManagement.css';
+import React, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "../../services/api";
+import "./MenuManagement.css";
 
 interface MenuItem {
   id: string;
@@ -17,44 +17,45 @@ const MenuManagement: React.FC = () => {
   const queryClient = useQueryClient();
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [newItem, setNewItem] = useState<Omit<MenuItem, 'id'>>({
-    name: '',
+  const [newItem, setNewItem] = useState<Omit<MenuItem, "id">>({
+    name: "",
     price: 0,
-    description: '',
-    category: 'Main'
+    description: "",
+    category: "Main",
   });
 
   // Get current menu
   const { data: menu = [] } = useQuery<MenuItem[]>({
-    queryKey: ['restaurantMenu', user?.id],
+    queryKey: ["restaurantMenu", user?.id],
     queryFn: async () => {
-      const response = await api.get('/restaurant/menu');
+      const response = await api.get(`/restaurant/menu?ownerId=${user?.id}`);
       return response.data.menu;
     },
-    enabled: !!user
+    enabled: !!user,
   });
 
   // Update menu mutation
   const updateMenuMutation = useMutation({
     mutationFn: async (updatedMenu: MenuItem[]) => {
-      const response = await api.put('/restaurant/menu', {
-        menu: updatedMenu
+      const response = await api.put("/restaurant/menu", {
+        ownerId: user?.id, //bug fix
+        menu: updatedMenu,
       });
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['restaurantMenu'] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["restaurantMenu", user?.id] });
+    },
   });
 
   const handleAddItem = () => {
     if (newItem.name && newItem.price > 0) {
       const item: MenuItem = {
         ...newItem,
-        id: Date.now().toString()
+        id: Date.now().toString(),
       };
       updateMenuMutation.mutate([...menu, item]);
-      setNewItem({ name: '', price: 0, description: '', category: 'Main' });
+      setNewItem({ name: "", price: 0, description: "", category: "Main" });
       setIsAddingItem(false);
     }
   };
@@ -65,7 +66,7 @@ const MenuManagement: React.FC = () => {
       name: item.name,
       price: item.price,
       description: item.description,
-      category: item.category || 'Main'
+      category: item.category || "Main",
     });
     setIsAddingItem(true);
   };
@@ -77,7 +78,7 @@ const MenuManagement: React.FC = () => {
       );
       updateMenuMutation.mutate(updatedMenu);
       setEditingItem(null);
-      setNewItem({ name: '', price: 0, description: '', category: 'Main' });
+      setNewItem({ name: "", price: 0, description: "", category: "Main" });
       setIsAddingItem(false);
     }
   };
@@ -89,7 +90,7 @@ const MenuManagement: React.FC = () => {
 
   const handleCancel = () => {
     setEditingItem(null);
-    setNewItem({ name: '', price: 0, description: '', category: 'Main' });
+    setNewItem({ name: "", price: 0, description: "", category: "Main" });
     setIsAddingItem(false);
   };
 
@@ -97,7 +98,7 @@ const MenuManagement: React.FC = () => {
     <div className="menu-management">
       <div className="menu-header">
         <h1>Menu Management</h1>
-        <button 
+        <button
           className="btn btn-primary"
           onClick={() => setIsAddingItem(true)}
         >
@@ -107,7 +108,7 @@ const MenuManagement: React.FC = () => {
 
       {isAddingItem && (
         <div className="add-item-form">
-          <h3>{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h3>
+          <h3>{editingItem ? "Edit Menu Item" : "Add New Menu Item"}</h3>
           <div className="form-group">
             <label>Item Name</label>
             <input
@@ -123,7 +124,12 @@ const MenuManagement: React.FC = () => {
               type="number"
               step="0.01"
               value={newItem.price}
-              onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+              onChange={(e) =>
+                setNewItem({
+                  ...newItem,
+                  price: parseFloat(e.target.value) || 0,
+                })
+              }
               placeholder="Enter price"
             />
           </div>
@@ -131,7 +137,9 @@ const MenuManagement: React.FC = () => {
             <label>Category</label>
             <select
               value={newItem.category}
-              onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+              onChange={(e) =>
+                setNewItem({ ...newItem, category: e.target.value })
+              }
             >
               <option value="Appetizer">Appetizer</option>
               <option value="Main">Main Course</option>
@@ -143,22 +151,21 @@ const MenuManagement: React.FC = () => {
             <label>Description</label>
             <textarea
               value={newItem.description}
-              onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+              onChange={(e) =>
+                setNewItem({ ...newItem, description: e.target.value })
+              }
               placeholder="Enter item description"
               rows={3}
             />
           </div>
           <div className="form-actions">
-            <button 
+            <button
               className="btn btn-primary"
               onClick={editingItem ? handleUpdateItem : handleAddItem}
             >
-              {editingItem ? 'Update Item' : 'Add Item'}
+              {editingItem ? "Update Item" : "Add Item"}
             </button>
-            <button 
-              className="btn btn-secondary"
-              onClick={handleCancel}
-            >
+            <button className="btn btn-secondary" onClick={handleCancel}>
               Cancel
             </button>
           </div>
@@ -168,7 +175,9 @@ const MenuManagement: React.FC = () => {
       <div className="menu-list">
         <h3>Current Menu Items</h3>
         {menu.length === 0 ? (
-          <p className="no-items">No menu items yet. Add your first item above!</p>
+          <p className="no-items">
+            No menu items yet. Add your first item above!
+          </p>
         ) : (
           <div className="menu-items">
             {menu.map((item: MenuItem) => (
@@ -180,13 +189,13 @@ const MenuManagement: React.FC = () => {
                   <p className="item-description">{item.description}</p>
                 </div>
                 <div className="item-actions">
-                  <button 
+                  <button
                     className="btn btn-secondary"
                     onClick={() => handleEditItem(item)}
                   >
                     Edit
                   </button>
-                  <button 
+                  <button
                     className="btn btn-danger"
                     onClick={() => handleDeleteItem(item.id)}
                   >

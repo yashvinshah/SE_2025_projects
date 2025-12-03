@@ -1,4 +1,6 @@
-const { db } = require('../config/firebase');
+const { db } = require("../config/firebase");
+const admin = require("firebase-admin");
+const axios = require("axios");
 
 class Restaurant {
   constructor(data) {
@@ -7,29 +9,80 @@ class Restaurant {
     this.cuisine = data.cuisine;
     this.description = data.description;
     this.rating = data.rating || 0;
-    this.deliveryTime = data.deliveryTime || '30-45 min';
+    this.deliveryTime = data.deliveryTime || "30-45 min";
     this.isLocalLegend = data.isLocalLegend || false;
     this.menu = data.menu || [];
     this.ownerId = data.ownerId;
-    this.address = data.address;
+    this.address = data.address || null; // address is object
+    this.location = data.location || null; // GeoPoint
     this.phone = data.phone;
     this.email = data.email;
-    this.isActive = data.isActive !== false; // Default to true
+    this.isActive = data.isActive !== false;
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
   }
 
-  // Create a new restaurant
+  /** 🔥 Format address object into full string */
+  static formatAddress(addressObj) {
+    if (!addressObj) return null;
+    const { street, city, state, zipCode } = addressObj;
+    return `${street}, ${city}, ${state} ${zipCode}`;
+  }
+
+  /** 🔥 Fetch GeoPoint from Google API */
+  static async getGeocode(addressObj) {
+    try {
+      const fullAddress = Restaurant.formatAddress(addressObj);
+      if (!fullAddress) return null;
+
+      const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          fullAddress
+        )}&key=${apiKey}`
+      );
+
+      if (response.data.status === "OK") {
+        const { lat, lng } = response.data.results[0].geometry.location;
+        return new admin.firestore.GeoPoint(lat, lng);
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return null;
+    }
+  }
+
+  /** 🔥 Create restaurant with GeoPoint */
   static async create(restaurantData) {
     try {
-      const restaurantRef = db.collection('restaurants').doc();
+      const restaurantRef = db.collection("restaurants").doc();
+
+      let geoPoint = null;
+
+      // Case 1: 前端傳 lat/lng
+      if (restaurantData.location?.lat && restaurantData.location?.lng) {
+        geoPoint = new admin.firestore.GeoPoint(
+          restaurantData.location.lat,
+          restaurantData.location.lng
+        );
+      }
+
+      // Case 2: 沒有 lat/lng → 用地址查找座標
+      else if (restaurantData.address) {
+        geoPoint = await Restaurant.getGeocode(restaurantData.address);
+      }
+
       const restaurantDoc = {
         id: restaurantRef.id,
         ...restaurantData,
+        location: geoPoint,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
+
       await restaurantRef.set(restaurantDoc);
       return new Restaurant(restaurantDoc);
     } catch (error) {
@@ -37,61 +90,39 @@ class Restaurant {
     }
   }
 
-  // Get restaurant by ID
+  /** Find restaurant by ID */
   static async findById(id) {
     try {
-      const restaurantDoc = await db.collection('restaurants').doc(id).get();
-      if (!restaurantDoc.exists) {
-        return null;
-      }
-      return new Restaurant({ id: restaurantDoc.id, ...restaurantDoc.data() });
+      const doc = await db.collection("restaurants").doc(id).get();
+      if (!doc.exists) return null;
+      return new Restaurant({ id: doc.id, ...doc.data() });
     } catch (error) {
       throw new Error(`Failed to find restaurant: ${error.message}`);
     }
   }
 
-  // Get restaurant by owner ID
-  static async findByOwnerId(ownerId) {
-    try {
-      const restaurantsSnapshot = await db.collection('restaurants')
-        .where('ownerId', '==', ownerId)
-        .get();
-      
-      return restaurantsSnapshot.docs.map(doc => 
-        new Restaurant({ id: doc.id, ...doc.data() })
-      );
-    } catch (error) {
-      throw new Error(`Failed to find restaurants by owner: ${error.message}`);
-    }
-  }
-
-  // Get all active restaurants
-  static async findAll() {
-    try {
-      const restaurantsSnapshot = await db.collection('restaurants')
-        .where('isActive', '==', true)
-        .get();
-      
-      return restaurantsSnapshot.docs.map(doc => 
-        new Restaurant({ id: doc.id, ...doc.data() })
-      );
-    } catch (error) {
-      throw new Error(`Failed to find restaurants: ${error.message}`);
-    }
-  }
-
-  // Update restaurant
+  /** Update restaurant */
   async update(updateData) {
     try {
-      const restaurantRef = db.collection('restaurants').doc(this.id);
-      const updatePayload = {
+      let updatePayload = {
         ...updateData,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
+
+      // user updated their address
+      if (
+        updateData.address &&
+        JSON.stringify(updateData.address) !== JSON.stringify(this.address)
+      ) {
+        const newLocation = await Restaurant.getGeocode(updateData.address);
+        if (newLocation) {
+          updatePayload.location = newLocation;
+        }
+      }
+
+      const restaurantRef = db.collection("restaurants").doc(this.id);
       await restaurantRef.update(updatePayload);
-      
-      // Update local instance
+
       Object.assign(this, updatePayload);
       return this;
     } catch (error) {
@@ -99,34 +130,7 @@ class Restaurant {
     }
   }
 
-  // Update menu
-  async updateMenu(menuItems) {
-    try {
-      const restaurantRef = db.collection('restaurants').doc(this.id);
-      await restaurantRef.update({
-        menu: menuItems,
-        updatedAt: new Date()
-      });
-      
-      this.menu = menuItems;
-      this.updatedAt = new Date();
-      return this;
-    } catch (error) {
-      throw new Error(`Failed to update menu: ${error.message}`);
-    }
-  }
-
-  // Delete restaurant
-  async delete() {
-    try {
-      await db.collection('restaurants').doc(this.id).delete();
-      return true;
-    } catch (error) {
-      throw new Error(`Failed to delete restaurant: ${error.message}`);
-    }
-  }
-
-  // Convert to JSON
+  /** Convert to JSON */
   toJSON() {
     return {
       id: this.id,
@@ -139,11 +143,17 @@ class Restaurant {
       menu: this.menu,
       ownerId: this.ownerId,
       address: this.address,
+      location: this.location
+        ? {
+            latitude: this.location.latitude,
+            longitude: this.location.longitude,
+          }
+        : null,
       phone: this.phone,
       email: this.email,
       isActive: this.isActive,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
     };
   }
 }

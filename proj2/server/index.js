@@ -1,8 +1,8 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+require("dotenv").config();
 
 const authRoutes = require('./routes/auth');
 const customerRoutes = require('./routes/customer');
@@ -12,17 +12,20 @@ const orderRoutes = require('./routes/orders');
 const { router: pointsRoutes, awardPointsForOrder } = require('./routes/points');
 const donationRoutes = require('./routes/donations');
 const voiceRoutes = require('./routes/voice');
+const users = require("./routes/users");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(helmet());
-app.use(morgan('combined'));
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(morgan("combined"));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,28 +38,32 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/voice', voiceRoutes);
+app.use("/api/users", users);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Hungry Wolf API is running!',
-    timestamp: new Date().toISOString()
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "OK",
+    message: "Hungry Wolf API is running!",
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
-    error: 'Something went wrong!',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  res.status(500).json({
+    error: "Something went wrong!",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Internal server error",
   });
 });
 
 // 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+app.use("*", (req, res) => {
+  res.status(404).json({ error: "Route not found" });
 });
 
 app.listen(PORT, () => {
