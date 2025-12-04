@@ -3,14 +3,15 @@ export const runtime = "nodejs"; // ensure Prisma runs in Node
 
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { dishesByCategoryDbFirst } from "@/lib/dishes";
+import { dishesByCategoryDbFirst, dishesByCategoriesDbFirst } from "@/lib/dishes";
 import { Dish, PowerUpsInput } from "@/lib/schemas";
 import { weightedSpin } from "@/lib/scoring";
 import { prisma } from "@/lib/db";
 
 const Body = z
   .object({
-    category: z.string().min(1).optional(),
+    category: z.string().min(1).optional(), // backwards compatibility
+    categories: z.array(z.string()).optional(), // new multi-category support
     tags: z.array(z.string()).optional().default([]),
     allergens: z.array(z.string()).optional().default([]),
     locked: z
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
 
     const {
       category,
+      categories,
       tags,
       allergens,
       powerups,
@@ -55,6 +57,7 @@ export async function POST(req: NextRequest) {
       dishCount,
     } = parsed.data as {
       category?: string;
+      categories?: string[];
       tags: string[];
       allergens: string[];
       powerups: PowerUpsInput;
@@ -62,8 +65,15 @@ export async function POST(req: NextRequest) {
       dishCount?: number;
     };
 
-    if (!category) {
-      return Response.json({ message: "category is required" }, { status: 400 });
+    // Support both old single category and new multi-category
+    const categoryList: string[] = categories && categories.length > 0
+      ? categories
+      : category
+        ? [category]
+        : [];
+
+    if (categoryList.length === 0) {
+      return Response.json({ message: "At least one category is required" }, { status: 400 });
     }
 
     const lockedInput = (locked ?? []).flatMap((x) => {
@@ -75,11 +85,39 @@ export async function POST(req: NextRequest) {
     const reels: Dish[][] = [];
     const count = dishCount ?? 1;
     for (let i = 0; i < count; i++) {
-      const dishes = await dishesByCategoryDbFirst(category, tags, allergens);
+      console.log(`[spin] Fetching reel ${i + 1}/${count} for categories:`, categoryList, `tags:`, tags, `allergens:`, allergens);
+
+      const dishes = await dishesByCategoriesDbFirst(categoryList, tags, allergens);
+
+      console.log(`[spin] Got ${dishes.length} dishes for reel ${i + 1}`);
+
+      if (dishes.length === 0) {
+        console.error(`[spin] No dishes found for categories: ${categoryList.join(", ")}, tags: ${tags.join(", ")}, allergens: ${allergens.join(", ")}`);
+        return Response.json(
+          { message: `No dishes available for selected categories: ${categoryList.join(", ")}. Please try different filters.` },
+          { status: 404 }
+        );
+      }
       reels.push(dishes);
     }
 
+    if (reels.length === 0 || reels.every(reel => reel.length === 0)) {
+      console.error("All reels are empty");
+      return Response.json(
+        { message: "No dishes available. Please try different categories or filters." },
+        { status: 404 }
+      );
+    }
+
     const selection = weightedSpin(reels, lockedInput, powerups);
+
+    if (!selection || selection.length === 0) {
+      console.error("weightedSpin returned empty selection");
+      return Response.json(
+        { message: "Failed to select dishes. Please try again." },
+        { status: 500 }
+      );
+    }
 
     try {
       await prisma.spin.create({
