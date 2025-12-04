@@ -67,7 +67,7 @@ export async function videoStubsFor(query: string): Promise<YtStub[]> {
     // Pad with deterministic stubs for UX reliability
     const padded = [...out];
     const stubs = stubVideos(query);
-    while (padded.length < 4) padded.push(stubs[padded.length]);
+    while (padded.length < 4) padded.push(stubs[padded.length]!);
     return padded.slice(0, 4);
   } catch {
     // Fail safe: never break the app
