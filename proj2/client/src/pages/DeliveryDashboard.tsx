@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import DeliveryHome from '../components/delivery/DeliveryHome';
 import OrderManagement from '../components/delivery/OrderManagement';
 import Profile from '../components/delivery/Profile';
+import Insights from '../components/delivery/Insights';
 import './Dashboard.css';
 
 const DeliveryDashboard: React.FC = () => {
@@ -20,7 +21,7 @@ const DeliveryDashboard: React.FC = () => {
     enabled: !!user
   });
 
-  const activeOrders = orders?.filter((order: any) => 
+  const activeOrders = orders?.filter((order: any) =>
     ['ready', 'out_for_delivery'].includes(order.status)
   ) || [];
 
@@ -51,6 +52,7 @@ const DeliveryDashboard: React.FC = () => {
           <Route path="/" element={<DeliveryHome />} />
           <Route path="/orders" element={<OrderManagement />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/insights" element={<Insights />} />
         </Routes>
       </div>
     </div>
