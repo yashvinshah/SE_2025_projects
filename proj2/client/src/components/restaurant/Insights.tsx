@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import './Insights.css';
@@ -10,6 +10,8 @@ interface Order {
     totalAmount: number;
     status: string;
     createdAt: string;
+    confirmedAt?: string;
+    readyAt?: string;
     items: Array<{
         name: string;
         price: number;
@@ -84,6 +86,19 @@ const Insights: React.FC = () => {
         const totalOrders = orders.length;
         const cancellationRatio = totalOrders ? (cancelledOrders / totalOrders) * 100 : 0;
 
+        // 4. Kitchen Prep Time Gauge
+        const prepTimes = orders
+            .filter(order => order.confirmedAt && order.readyAt)
+            .map(order => {
+                const confirmed = new Date(order.confirmedAt!).getTime();
+                const ready = new Date(order.readyAt!).getTime();
+                return (ready - confirmed) / 60000; // in minutes
+            });
+
+        const avgPrepTime = prepTimes.length
+            ? prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length
+            : 0;
+
         return {
             dailyRevenue,
             dailyOrdersCount,
@@ -91,7 +106,8 @@ const Insights: React.FC = () => {
             aovChange,
             cancelledOrders,
             totalOrders,
-            cancellationRatio
+            cancellationRatio,
+            avgPrepTime
         };
     }, [orders]);
 
@@ -174,43 +190,74 @@ const Insights: React.FC = () => {
                     </div>
                 </div>
             </div>
-            <div className="chart-section">
-                <div className="chart-header">
-                    <h3>Top Selling Products</h3>
-                    <div className="chart-tabs">
-                        <button
-                            className={`chart-tab ${activeTab === 'volume' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('volume')}
-                        >
-                            By Volume
-                        </button>
-                        <button
-                            className={`chart-tab ${activeTab === 'revenue' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('revenue')}
-                        >
-                            By Revenue
-                        </button>
+            <div className="charts-row">
+                <div className="chart-section">
+                    <div className="chart-header">
+                        <h3>Top Selling Products</h3>
+                        <div className="chart-tabs">
+                            <button
+                                className={`chart-tab ${activeTab === 'volume' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('volume')}
+                            >
+                                By Volume
+                            </button>
+                            <button
+                                className={`chart-tab ${activeTab === 'revenue' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('revenue')}
+                            >
+                                By Revenue
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer>
+                            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" />
+                                <YAxis tickFormatter={(val) => activeTab === 'revenue' ? `$${val}` : val} />
+                                <Tooltip
+                                    formatter={(value: number) => activeTab === 'revenue' ? [`$${value.toFixed(2)}`, 'Revenue'] : [value, 'Volume']}
+                                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                                />
+                                <Bar
+                                    dataKey={activeTab}
+                                    fill={activeTab === 'volume' ? '#3498db' : '#2ecc71'}
+                                    radius={[4, 4, 0, 0]}
+                                    animationDuration={1000}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div style={{ width: '100%', height: 400 }}>
-                    <ResponsiveContainer>
-                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="name" />
-                            <YAxis tickFormatter={(val) => activeTab === 'revenue' ? `$${val}` : val} />
-                            <Tooltip
-                                formatter={(value: number) => activeTab === 'revenue' ? [`$${value.toFixed(2)}`, 'Revenue'] : [value, 'Volume']}
-                                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                            />
-                            <Bar
-                                dataKey={activeTab}
-                                fill={activeTab === 'volume' ? '#3498db' : '#2ecc71'}
-                                radius={[4, 4, 0, 0]}
-                                animationDuration={1000}
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="gauge-section">
+                    <div className="chart-header">
+                        <h3>Kitchen Efficiency</h3>
+                    </div>
+                    <div className="gauge-container">
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <Pie
+                                    data={[{ value: metrics.avgPrepTime }, { value: 60 - metrics.avgPrepTime }]}
+                                    cx="50%"
+                                    cy="70%"
+                                    startAngle={180}
+                                    endAngle={0}
+                                    innerRadius={70}
+                                    outerRadius={90}
+                                    dataKey="value"
+                                >
+                                    <Cell fill="#e67e22" />
+                                    <Cell fill="#e0e0e0" />
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                        <div className="gauge-label">
+                            <div className="gauge-value">{metrics.avgPrepTime.toFixed(0)} min</div>
+                            <div className="gauge-text">Avg Prep Time</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

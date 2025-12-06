@@ -84,13 +84,20 @@
   color: #383d41;
 }
 
-/* Chart Section */
-.chart-section {
+/* Charts Layout */
+.charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.chart-section,
+.gauge-section {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  margin-top: 2rem;
   border: 1px solid #e0e0e0;
 }
 
@@ -137,6 +144,41 @@
   color: #2c3e50;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   font-weight: 600;
+}
+
+/* Gauge specific styles */
+.gauge-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+}
+
+.gauge-label {
+  position: absolute;
+  bottom: 20px;
+  text-align: center;
+}
+
+.gauge-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1;
+}
+
+.gauge-text {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
