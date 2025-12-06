@@ -2,6 +2,8 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { db } = require('../config/firebase');
 const User = require('../models/User');
+const Rating = require('../models/Rating');
+const { updateQuestProgress } = require('./quests');
 
 const router = express.Router();
 
@@ -60,6 +62,14 @@ router.post('/', [
     };
 
     await orderRef.set(order);
+
+    // Update quest progress for the customer
+    try {
+      await updateQuestProgress(customerId, order);
+    } catch (questError) {
+      console.error('Quest progress update failed:', questError);
+      // Don't fail the order creation if quest update fails
+    }
 
     res.status(201).json({
       message: 'Order created successfully',
@@ -140,25 +150,25 @@ router.get('/delivery', async (req, res) => {
   }
 });
 
-// Get order by ID (mock data for now)
+// Get order by ID
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const mockOrder = {
-      id,
-      customerId: 'customer123',
-      restaurantId: 'restaurant1',
-      items: [
-        { name: 'Pizza', price: 12.99, quantity: 1 }
-      ],
-      totalAmount: 12.99,
-      status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date()
+    const orderDoc = await db.collection('orders').doc(id).get();
+    
+    if (!orderDoc.exists) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const order = {
+      id: orderDoc.id,
+      ...orderDoc.data(),
+      createdAt: orderDoc.data().createdAt?.toDate?.() || new Date(),
+      updatedAt: orderDoc.data().updatedAt?.toDate?.() || new Date()
     };
 
-    res.json({ order: mockOrder });
+    res.json({ order });
   } catch (error) {
     console.error('Get order error:', error);
     res.status(500).json({ error: error.message });
@@ -180,10 +190,17 @@ router.put('/:id/status', [
 
     // Update order status in Firebase
     const orderRef = db.collection('orders').doc(id);
-    await orderRef.update({
+    const updateData = {
       status: status,
       updatedAt: new Date()
-    });
+    };
+    
+    // Add deliveredAt timestamp if status is delivered
+    if (status === 'delivered') {
+      updateData.deliveredAt = new Date();
+    }
+    
+    await orderRef.update(updateData);
 
     // When order is marked as ready, it becomes available for riders to accept
     // No automatic assignment - riders will see it in their available orders list
@@ -199,7 +216,7 @@ router.put('/:id/status', [
   }
 });
 
-// Assign delivery partner (mock for now)
+// Assign delivery partner
 router.put('/:id/assign-delivery', [
   body('deliveryPartnerId').notEmpty()
 ], async (req, res) => {
@@ -212,7 +229,13 @@ router.put('/:id/assign-delivery', [
     const { id } = req.params;
     const { deliveryPartnerId } = req.body;
 
-    // Mock response
+    const orderRef = db.collection('orders').doc(id);
+    await orderRef.update({
+      deliveryPartnerId: deliveryPartnerId,
+      assignedAt: new Date(),
+      updatedAt: new Date()
+    });
+
     res.json({
       message: 'Delivery partner assigned successfully',
       orderId: id,
@@ -276,6 +299,15 @@ router.post('/:id/rate', [
       updatedAt: new Date()
     });
 
+    // Automatically update restaurant's average rating
+    try {
+      const updatedRating = await Rating.updateRestaurantRating(orderData.restaurantId);
+      console.log(`Restaurant rating updated: ${updatedRating.averageRating} stars (${updatedRating.totalRatings} ratings)`);
+    } catch (ratingError) {
+      console.error('Failed to update restaurant rating:', ratingError);
+      // Don't fail the rating submission if restaurant rating update fails
+    }
+
     res.json({
       message: 'Rating submitted successfully',
       orderId: id,
@@ -287,6 +319,5 @@ router.post('/:id/rate', [
     res.status(500).json({ error: error.message });
   }
 });
-
 
 module.exports = router;

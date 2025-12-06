@@ -3,6 +3,8 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.js'],
   collectCoverageFrom: [
     'src/**/*.js',
+    'server/models/*.js',
+    'server/routes/*.js',
     '!**/node_modules/**',
     '!**/coverage/**',
     '!jest.config.js'
