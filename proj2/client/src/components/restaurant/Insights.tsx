@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import './Insights.css';
@@ -9,10 +10,23 @@ interface Order {
     totalAmount: number;
     status: string;
     createdAt: string;
+    items: Array<{
+        name: string;
+        price: number;
+        quantity: number;
+    }>;
 }
+
+type ChartTab = 'volume' | 'revenue';
+
+// Tooltip formatter type
+const formatTooltipValue = (value: number, name: string) => {
+    return [name === 'revenue' ? `$${value.toFixed(2)}` : value, name === 'revenue' ? 'Revenue' : 'Volume'];
+};
 
 const Insights: React.FC = () => {
     const { user } = useAuth();
+    const [activeTab, setActiveTab] = useState<ChartTab>('volume');
 
     const { data: orders = [], isLoading } = useQuery<Order[]>({
         queryKey: ['restaurantOrders', user?.id],
@@ -81,6 +95,32 @@ const Insights: React.FC = () => {
         };
     }, [orders]);
 
+    const chartData = useMemo(() => {
+        if (!orders.length) return [];
+
+        const productStats = new Map<string, { name: string; volume: number; revenue: number }>();
+
+        orders.forEach(order => {
+            if (order.status === 'delivered') {
+                order.items.forEach(item => {
+                    const existing = productStats.get(item.name) || { name: item.name, volume: 0, revenue: 0 };
+                    productStats.set(item.name, {
+                        name: item.name,
+                        volume: existing.volume + item.quantity,
+                        revenue: existing.revenue + (item.price * item.quantity)
+                    });
+                });
+            }
+        });
+
+        const data = Array.from(productStats.values());
+
+        // Sort and slice top 5 based on active tab
+        return data
+            .sort((a, b) => b[activeTab] - a[activeTab])
+            .slice(0, 5);
+    }, [orders, activeTab]);
+
     if (isLoading) return <div>Loading insights...</div>;
     if (!metrics) return <div>No data available for insights.</div>;
 
@@ -132,6 +172,45 @@ const Insights: React.FC = () => {
                     <div className="card-subtext">
                         {metrics.cancelledOrders} cancelled / {metrics.totalOrders} total
                     </div>
+                </div>
+            </div>
+            <div className="chart-section">
+                <div className="chart-header">
+                    <h3>Top Selling Products</h3>
+                    <div className="chart-tabs">
+                        <button
+                            className={`chart-tab ${activeTab === 'volume' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('volume')}
+                        >
+                            By Volume
+                        </button>
+                        <button
+                            className={`chart-tab ${activeTab === 'revenue' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('revenue')}
+                        >
+                            By Revenue
+                        </button>
+                    </div>
+                </div>
+
+                <div style={{ width: '100%', height: 400 }}>
+                    <ResponsiveContainer>
+                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" />
+                            <YAxis tickFormatter={(val) => activeTab === 'revenue' ? `$${val}` : val} />
+                            <Tooltip
+                                formatter={(value: number) => activeTab === 'revenue' ? [`$${value.toFixed(2)}`, 'Revenue'] : [value, 'Volume']}
+                                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                            />
+                            <Bar
+                                dataKey={activeTab}
+                                fill={activeTab === 'volume' ? '#3498db' : '#2ecc71'}
+                                radius={[4, 4, 0, 0]}
+                                animationDuration={1000}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
         </div>

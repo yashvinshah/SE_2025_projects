@@ -84,16 +84,78 @@
   color: #383d41;
 }
 
+/* Chart Section */
 .chart-section {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   margin-top: 2rem;
+  border: 1px solid #e0e0e0;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chart-header h3 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.chart-tabs {
+  display: flex;
+  background: #f8f9fa;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.chart-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.chart-tab:hover {
+  color: #2c3e50;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.chart-tab.active {
+  background: white;
+  color: #2c3e50;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {
   .insights-cards {
     grid-template-columns: 1fr;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .chart-tabs {
+    width: 100%;
+  }
+
+  .chart-tab {
+    flex: 1;
+    text-align: center;
   }
 }
