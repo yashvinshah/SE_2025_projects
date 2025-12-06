@@ -214,7 +214,12 @@ const Insights: React.FC = () => {
                         <ResponsiveContainer>
                             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="name" />
+                                <XAxis
+                                    dataKey="name"
+                                    interval={0}
+                                    height={60}
+                                    tick={{ fontSize: 12, angle: -30, textAnchor: 'end' } as any}
+                                />
                                 <YAxis tickFormatter={(val) => activeTab === 'revenue' ? `$${val}` : val} />
                                 <Tooltip
                                     formatter={(value: number) => activeTab === 'revenue' ? [`$${value.toFixed(2)}`, 'Revenue'] : [value, 'Volume']}
