@@ -14,6 +14,9 @@ import RestaurantDashboard from './pages/RestaurantDashboard';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
+// NEW – Admin analytics dashboard
+import AdminDashboard from "./components/analytics/AdminDashboard";
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,38 +37,51 @@ function App() {
               <Navbar />
               <main className="main-content">
                 <Routes>
+
                   {/* Public routes */}
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
-                  
+
                   {/* Protected routes */}
-                  <Route 
-                    path="/customer/*" 
+                  <Route
+                    path="/customer/*"
                     element={
                       <ProtectedRoute allowedRoles={['customer']}>
                         <CustomerDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/restaurant/*" 
+
+                  <Route
+                    path="/restaurant/*"
                     element={
                       <ProtectedRoute allowedRoles={['restaurant']}>
                         <RestaurantDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/delivery/*" 
+
+                  <Route
+                    path="/delivery/*"
                     element={
                       <ProtectedRoute allowedRoles={['delivery']}>
                         <DeliveryDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  
-                  {/* Redirect unknown routes to home */}
+
+                  {/* NEW — Admin analytics route */}
+                  <Route
+                    path="/admin/analytics"
+                    element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Redirect unknown routes */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>

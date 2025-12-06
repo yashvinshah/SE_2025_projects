@@ -7,7 +7,10 @@ import CustomerHome from '../components/customer/CustomerHome';
 import RestaurantList from '../components/customer/RestaurantList';
 import Cart from '../components/customer/Cart';
 import Orders from '../components/customer/Orders';
+import Quests from '../components/customer/Quests';
 import Profile from '../components/customer/Profile';
+import Wishlist from '../components/customer/Wishlist';
+import Subscription from '../components/customer/Subscription';
 import './Dashboard.css';
 
 const CustomerDashboard: React.FC = () => {
@@ -59,7 +62,10 @@ const CustomerDashboard: React.FC = () => {
           <Route path="/restaurants" element={<RestaurantList />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/quests" element={<Quests />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/subscription" element={<Subscription />} />
         </Routes>
       </div>
     </div>

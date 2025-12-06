@@ -44,6 +44,26 @@ const Orders: React.FC = () => {
     }
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (order: any) => {
+      const response = await api.post('/orders', {
+        customerId: user?.id,
+        restaurantId: order.restaurantId,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        deliveryAddress: order.deliveryAddress
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customerOrders'] });
+      alert('Order placed successfully! 🎉');
+    },
+    onError: (error: any) => {
+      alert('Failed to reorder: ' + (error.response?.data?.error || 'Unknown error'));
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -88,6 +108,12 @@ const Orders: React.FC = () => {
         rating,
         review
       });
+    }
+  };
+
+  const handleReorder = (order: any) => {
+    if (window.confirm(`Reorder ${order.items.length} items for $${order.totalAmount.toFixed(2)}?`)) {
+      reorderMutation.mutate(order);
     }
   };
 
@@ -150,7 +176,9 @@ const Orders: React.FC = () => {
                   <p><strong>Items:</strong> {order.items.length} item(s)</p>
                   <p><strong>Ordered:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
                   {order.deliveredAt && (
-                    <p><strong>Delivered:</strong> {new Date(order.deliveredAt).toLocaleDateString()}</p>
+                    <p><strong>Delivered:</strong> {order.deliveredAt._seconds ? 
+                      new Date(order.deliveredAt._seconds * 1000).toLocaleDateString() : 
+                      new Date(order.deliveredAt).toLocaleDateString()}</p>
                   )}
                 </div>
                 <div className="order-actions">
@@ -160,6 +188,15 @@ const Orders: React.FC = () => {
                   >
                     View Details
                   </button>
+                  {order.status === 'delivered' && (
+                    <button 
+                      className="btn btn-success reorder-btn"
+                      onClick={() => handleReorder(order)}
+                      disabled={reorderMutation.isPending}
+                    >
+                      {reorderMutation.isPending ? 'Ordering...' : '🔄 Reorder'}
+                    </button>
+                  )}
                   {order.status === 'delivered' && !order.ratings?.customer && (
                     <button 
                       className="btn btn-primary"
@@ -210,7 +247,9 @@ const Orders: React.FC = () => {
                   <p><strong>Total Amount:</strong> ${selectedOrder.totalAmount.toFixed(2)}</p>
                   <p><strong>Ordered:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
                   {selectedOrder.deliveredAt && (
-                    <p><strong>Delivered:</strong> {new Date(selectedOrder.deliveredAt).toLocaleString()}</p>
+                    <p><strong>Delivered:</strong> {selectedOrder.deliveredAt._seconds ? 
+                      new Date(selectedOrder.deliveredAt._seconds * 1000).toLocaleString() : 
+                      new Date(selectedOrder.deliveredAt).toLocaleString()}</p>
                   )}
                 </div>
 
