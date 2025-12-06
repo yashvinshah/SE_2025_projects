@@ -48,7 +48,7 @@ export default function PartyChat({ code, nickname, transportLabel, onGetRealtim
   };
 
   return (
-    <div className="rounded-2xl border bg-white dark:bg-neutral-900 dark:border-neutral-800">
+    <div className="rounded-2xl border border-neutral-200 bg-white/90 backdrop-blur-md dark:bg-[#1c1e23]/90 dark:border-[#303237] dark:shadow-[0_4px_12px_rgba(0,0,0,0.25)]">
       <div className="px-3 py-2 text-sm font-semibold">Party chat</div>
       <div className="h-40 overflow-auto border-y px-3 py-2 text-xs dark:border-neutral-800">
         {msgs.length === 0 ? (
