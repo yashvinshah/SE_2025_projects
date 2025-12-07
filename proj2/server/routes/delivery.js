@@ -48,12 +48,19 @@ router.get('/orders', async (req, res) => {
       .where('deliveryPartnerId', '==', riderId)
       .get();
 
-    const orders = ordersSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.() || new Date(),
-      updatedAt: doc.data().updatedAt?.toDate?.() || new Date()
-    }));
+    const orders = ordersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+        updatedAt: data.updatedAt?.toDate?.() || new Date(data.updatedAt),
+        driverAcceptedAt: data.driverAcceptedAt?.toDate?.() || (data.driverAcceptedAt ? new Date(data.driverAcceptedAt) : null),
+        deliveredAt: data.deliveredAt?.toDate?.() || (data.deliveredAt ? new Date(data.deliveredAt) : null),
+        confirmedAt: data.confirmedAt?.toDate?.() || (data.confirmedAt ? new Date(data.confirmedAt) : null),
+        readyAt: data.readyAt?.toDate?.() || (data.readyAt ? new Date(data.readyAt) : null),
+      };
+    });
 
     res.json({ orders });
   } catch (error) {

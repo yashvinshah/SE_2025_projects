@@ -84,6 +84,12 @@ const Navbar: React.FC = () => {
                 </Link>
               )}
 
+              {user.role === "delivery" && (
+                <Link to="/delivery/insights" className="navbar-link">
+                  Insights
+                </Link>
+              )}
+
               <div className="navbar-user">
                 {/* ⭐ 名字＋ hover 顯示地址 */}
                 <div className="user-name-wrapper">
