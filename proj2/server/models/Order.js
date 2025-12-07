@@ -15,7 +15,12 @@ class Order {
     this.paymentMethod = data.paymentMethod || 'cash_on_delivery';
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
+    this.confirmedAt = data.confirmedAt || null;
+    this.readyAt = data.readyAt || null;
+    this.readyAt = data.readyAt || null;
+    this.driverAcceptedAt = data.driverAcceptedAt || null;
     this.deliveredAt = data.deliveredAt || null;
+    this.distance = data.distance || 0; // Distance in miles
     this.ratings = data.ratings || {}; // {customer: {restaurant: 5, delivery: 4}, restaurant: {customer: 4}}
   }
 
@@ -26,7 +31,9 @@ class Order {
       const orderDoc = {
         id: orderRef.id,
         ...orderData,
+        ...orderData,
         status: 'pending',
+        distance: (Math.random() * 5 + 1).toFixed(1), // Simulate distance between 1-6 miles
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -110,6 +117,10 @@ class Order {
 
       if (newStatus === 'delivered') {
         updateData.deliveredAt = new Date();
+      } else if (newStatus === 'confirmed') {
+        updateData.confirmedAt = new Date();
+      } else if (newStatus === 'ready') {
+        updateData.readyAt = new Date();
       }
 
       await orderRef.update(updateData);
@@ -119,6 +130,10 @@ class Order {
       this.updatedAt = updateData.updatedAt;
       if (newStatus === 'delivered') {
         this.deliveredAt = updateData.deliveredAt;
+      } else if (newStatus === 'confirmed') {
+        this.confirmedAt = updateData.confirmedAt;
+      } else if (newStatus === 'ready') {
+        this.readyAt = updateData.readyAt;
       }
 
       return this;
@@ -133,10 +148,12 @@ class Order {
       const orderRef = db.collection('orders').doc(this.id);
       await orderRef.update({
         deliveryPartnerId,
+        driverAcceptedAt: new Date(),
         updatedAt: new Date()
       });
 
       this.deliveryPartnerId = deliveryPartnerId;
+      this.driverAcceptedAt = new Date();
       this.updatedAt = new Date();
 
       return this;
@@ -203,7 +220,11 @@ class Order {
       paymentMethod: this.paymentMethod,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
+      confirmedAt: this.confirmedAt,
+      readyAt: this.readyAt,
+      driverAcceptedAt: this.driverAcceptedAt,
       deliveredAt: this.deliveredAt,
+      distance: this.distance,
       ratings: this.ratings
     };
   }

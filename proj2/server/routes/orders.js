@@ -118,12 +118,17 @@ router.get('/restaurant', async (req, res) => {
       .where('restaurantId', '==', restaurantId)
       .get();
 
-    const orders = ordersSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.() || new Date(),
-      updatedAt: doc.data().updatedAt?.toDate?.() || new Date()
-    }));
+    const orders = ordersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+        updatedAt: data.updatedAt?.toDate?.() || new Date(data.updatedAt),
+        confirmedAt: data.confirmedAt?.toDate?.() || (data.confirmedAt ? new Date(data.confirmedAt) : null),
+        readyAt: data.readyAt?.toDate?.() || (data.readyAt ? new Date(data.readyAt) : null),
+      };
+    });
 
     res.json({ orders });
   } catch (error) {

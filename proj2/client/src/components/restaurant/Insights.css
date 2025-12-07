@@ -1,0 +1,203 @@
+.insights-container {
+  padding: 2rem;
+}
+
+.insights-header {
+  margin-bottom: 2rem;
+}
+
+.insights-header h2 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.insights-header p {
+  color: #7f8c8d;
+}
+
+.insights-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.insight-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #e0e0e0;
+}
+
+.insight-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.card-subtext {
+  font-size: 0.9rem;
+  color: #95a5a6;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.trend-positive {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.trend-negative {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.trend-neutral {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+/* Charts Layout */
+.charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.chart-section,
+.gauge-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e0e0;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chart-header h3 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.chart-tabs {
+  display: flex;
+  background: #f8f9fa;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.chart-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.chart-tab:hover {
+  color: #2c3e50;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.chart-tab.active {
+  background: white;
+  color: #2c3e50;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+/* Gauge specific styles */
+.gauge-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+}
+
+.gauge-label {
+  position: absolute;
+  bottom: 20px;
+  text-align: center;
+}
+
+.gauge-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1;
+}
+
+.gauge-text {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .insights-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .chart-tabs {
+    width: 100%;
+  }
+
+  .chart-tab {
+    flex: 1;
+    text-align: center;
+  }
+}
