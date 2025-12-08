@@ -320,4 +320,219 @@ describe("SlotMachine (happy-dom) with required props", () => {
         expect(lockA).toHaveAttribute("aria-pressed", "true");
         expect(lockB).toHaveAttribute("aria-pressed", "false");
     });
+
+    /* --- Multi-Dish Tests (4, 5, 6 dishes) --- */
+    it("13) renders 4 slots when dishCount=4", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        expect(cards.length).toBe(4);
+    });
+
+    it("14) renders 5 slots when dishCount=5", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D", "E"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        expect(cards.length).toBe(5);
+    });
+
+    it("15) renders 6 slots when dishCount=6", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D", "E", "F"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        expect(cards.length).toBe(6);
+    });
+
+    it("16) handles lock/unlock for 4+ individual slots", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        expect(cards.length).toBe(4);
+
+        const locks = cards.map((card) =>
+            within(card as HTMLElement).getByRole("button", { name: /lock/i })
+        );
+
+        await clickWithToggle(locks[0]);
+        expect(locks[0]).toHaveAttribute("aria-pressed", "true");
+        expect(locks[1]).toHaveAttribute("aria-pressed", "false");
+        expect(locks[2]).toHaveAttribute("aria-pressed", "false");
+        expect(locks[3]).toHaveAttribute("aria-pressed", "false");
+
+        await clickWithToggle(locks[2]);
+        expect(locks[0]).toHaveAttribute("aria-pressed", "true");
+        expect(locks[2]).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("17) spins with 4 dishes respects locks", async () => {
+        queueFetch(
+            mkSpinResp(["A", "B", "C", "D"]),
+            mkSpinResp(["A_new", "B", "C_new", "D_new"])
+        );
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        let cards = getCards();
+        const lock1 = within(cards[1] as HTMLElement).getByRole("button", { name: /lock/i });
+        const lock3 = within(cards[3] as HTMLElement).getByRole("button", { name: /lock/i });
+
+        await clickWithToggle(lock1);
+        await clickWithToggle(lock3);
+
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+        await waitFor(() => {
+            cards = getCards();
+            const names = cards.map((c) =>
+                within(c as HTMLElement)
+                    .getByRole("heading", { level: 3 })
+                    .textContent?.split(" - ")[0]
+            );
+            expect(names[1]).toBe("B");
+            expect(names[3]).toBe("D_new");
+        });
+    });
+
+    it("18) spins with 5 dishes respects multiple locks", async () => {
+        queueFetch(
+            mkSpinResp(["A", "B", "C", "D", "E"]),
+            mkSpinResp(["A_new", "B", "C_new", "D", "E_new"])
+        );
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        let cards = getCards();
+        const locks = cards.map((card) =>
+            within(card as HTMLElement).getByRole("button", { name: /lock/i })
+        );
+
+        await clickWithToggle(locks[1]);
+        await clickWithToggle(locks[3]);
+
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+        await waitFor(() => {
+            cards = getCards();
+            const names = cards.map((c) =>
+                within(c as HTMLElement)
+                    .getByRole("heading", { level: 3 })
+                    .textContent?.split(" - ")[0]
+            );
+            expect(names[1]).toBe("B");
+            expect(names[3]).toBe("D");
+        });
+    });
+
+    it("19) displays grid layout correctly for 4 slots", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const container = screen.getByRole("heading", { level: 2, name: /result/i }).parentElement;
+        const cards = getCards();
+        expect(cards.length).toBe(4);
+    });
+
+    it("20) displays grid layout correctly for 5 slots", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D", "E"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        expect(cards.length).toBe(5);
+    });
+
+    it("21) displays grid layout correctly for 6 slots", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D", "E", "F"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        expect(cards.length).toBe(6);
+    });
+
+    it("22) handles dynamic dish count updates from 3 to 4", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C"]), mkSpinResp(["X", "Y", "Z", "W"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        let cards = getCards();
+        expect(cards.length).toBe(3);
+
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+        cards = getCards();
+        expect(cards.length).toBe(4);
+    });
+
+    it("23) handles dynamic dish count updates from 3 to 5", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C"]), mkSpinResp(["V", "W", "X", "Y", "Z"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        let cards = getCards();
+        expect(cards.length).toBe(3);
+
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+        cards = getCards();
+        expect(cards.length).toBe(5);
+    });
+
+    it("24) handles dynamic dish count updates from 6 to 3", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D", "E", "F"]), mkSpinResp(["X", "Y", "Z"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        let cards = getCards();
+        expect(cards.length).toBe(6);
+
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+        cards = getCards();
+        expect(cards.length).toBe(3);
+    });
+
+    it("25) all 4 dish slots are independent for locking", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        const locks = cards.map((card) =>
+            within(card as HTMLElement).getByRole("button", { name: /lock/i })
+        );
+
+        await clickWithToggle(locks[0]);
+        await clickWithToggle(locks[2]);
+
+        expect(locks[0]).toHaveAttribute("aria-pressed", "true");
+        expect(locks[1]).toHaveAttribute("aria-pressed", "false");
+        expect(locks[2]).toHaveAttribute("aria-pressed", "true");
+        expect(locks[3]).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("26) all 5 dish slots are independent for locking", async () => {
+        queueFetch(mkSpinResp(["A", "B", "C", "D", "E"]));
+        render(<Harness />);
+        await userEvent.click(screen.getByRole("button", { name: /spin/i }));
+
+        const cards = getCards();
+        const locks = cards.map((card) =>
+            within(card as HTMLElement).getByRole("button", { name: /lock/i })
+        );
+
+        await clickWithToggle(locks[1]);
+        await clickWithToggle(locks[3]);
+        await clickWithToggle(locks[4]);
+
+        expect(locks[0]).toHaveAttribute("aria-pressed", "false");
+        expect(locks[1]).toHaveAttribute("aria-pressed", "true");
+        expect(locks[2]).toHaveAttribute("aria-pressed", "false");
+        expect(locks[3]).toHaveAttribute("aria-pressed", "true");
+        expect(locks[4]).toHaveAttribute("aria-pressed", "true");
+    });
 });
