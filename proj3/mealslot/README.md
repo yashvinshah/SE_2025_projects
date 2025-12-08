@@ -71,26 +71,12 @@ mealslot/
 └─ README.md
 ```
 
-## Quick Start (GitHub Codespaces)
+## Quick Start (Local or GitHub Codespaces)
 
-Create a Codespace: GitHub → Code → Codespaces → Create on `main`
-
-Then run:
+Run:
 ```
-cd proj2/mealslot
-corepack enable
-corepack prepare pnpm@latest --activate
-pnpm install
-pnpm prisma db push
-pnpm prisma db seed
-cp -n .env.example .env.local   # stubs work without keys
-pnpm dev                        # Next.js on port 3000 (auto-forwarded)
-```
-Optional: WebSocket dev server
-```
-cd ws-server
-pnpm install
-pnpm dev                        # typically port 4001 (auto-forwarded)
+chmod +x start_al.sh
+start_al.sh
 ```
 Scripts
 ```
