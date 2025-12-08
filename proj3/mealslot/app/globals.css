@@ -5,35 +5,35 @@
 
 /* Light & dark tokens on <html> via next-themes */
 :root {
-  --bg: 255 255 255;  /* white */
-  --fg: 17 24 39;     /* slate-900-ish */
-  --card: 255 255 255;
-  --card-border: 229 231 235; /* neutral-200 */
+  --bg: 254 253 250;  /* very slightly warm white */
+  --fg: 20 24 38;     /* tiny shift for improved contrast */
+  --card: 255 254 250; /* near-white card */
+  --card-border: 232 233 236; /* neutral-200 (subtle adjust) */
 }
 
 .dark {
-  --bg: 10 10 10;       /* deep neutral */
-  --fg: 243 244 246;    /* slate-100-ish */
-  --card: 23 23 23;     /* neutral-900 */
-  --card-border: 38 38 38; /* neutral-800 */
+  --bg: 12 12 12;       /* tiny brighten in dark base */
+  --fg: 245 245 246;    /* slightly lighter text in dark */
+  --card: 25 25 25;     /* neutral-900 (very small shift) */
+  --card-border: 40 40 40; /* neutral-800 (subtle adjust) */
 }
 
 /* Surface tokens for consistent light/dark styling */
 :root {
-  --surface-bg: rgba(255,255,255,0.9);
-  --surface-border: rgba(229,231,235,1);
-  --surface-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  --chip-bg: #f0ece6;
-  --chip-hover: #e9e4dd;
+  --surface-bg: rgba(255,254,250,0.92); /* slightly more opaque warm surface */
+  --surface-border: rgba(232,233,236,1);
+  --surface-shadow: 0 4px 12px rgba(0,0,0,0.085);
+  --chip-bg: #f3efe8; /* subtle warm tint */
+  --chip-hover: #efe9df;
   --chip-text: #1f2937;
 }
 .dark {
-  --surface-bg: rgba(28,30,35,0.9);
-  --surface-border: rgba(48,50,55,0.9);
-  --surface-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  --chip-bg: #26282d;
-  --chip-hover: #303237;
-  --chip-text: #e6e7e8;
+  --surface-bg: rgba(30,32,36,0.9);
+  --surface-border: rgba(50,52,57,0.9);
+  --surface-shadow: 0 4px 12px rgba(0,0,0,0.245);
+  --chip-bg: #27292e;
+  --chip-hover: #303337;
+  --chip-text: #e7e8e9;
 }
 
 html, body {
