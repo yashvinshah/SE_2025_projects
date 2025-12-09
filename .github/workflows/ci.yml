@@ -42,22 +42,22 @@ jobs:
 
       # ---------------- Install ----------------
       - name: Install dependencies
-        working-directory: mealslot
+        working-directory: proj3/mealslot
         run: pnpm install --no-frozen-lockfile
 
       - name: Generate Prisma client
-        working-directory: mealslot
+        working-directory: proj3/mealslot
         run: npx prisma generate
 
       # ---------------- Lint ----------------
       - name: Lint
-        working-directory: mealslot
+        working-directory: proj3/mealslot
         run: pnpm run lint
         continue-on-error: true
 
       # ---------------- Tests + Coverage ----------------
       - name: Run Vitest with coverage
-        working-directory: mealslot
+        working-directory: proj3/mealslot
         run: npx vitest run --coverage
         continue-on-error: true
         env:
@@ -71,7 +71,7 @@ jobs:
 
       # ---------------- Build ----------------
       - name: Build application
-        working-directory: mealslot
+        working-directory: proj3/mealslot
         run: pnpm run build
         continue-on-error: true
 
