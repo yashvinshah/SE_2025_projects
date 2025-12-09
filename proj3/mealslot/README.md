@@ -3,7 +3,8 @@
 [![codecov](https://codecov.io/github/yashvinshah/SE_2025_projects/graph/badge.svg?token=4FG9EPMKX0)](https://codecov.io/github/yashvinshah/SE_2025_projects)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./mealslot/LICENCE)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](./mealslot/CONTRIBUTING.md)
-[![DOI](https://img.shields.io/badge/DOI-10.0000%2Fexample-blue.svg)](https://doi.org/10.0000/example)
+[![DOI](https://zenodo.org/badge/1044452469.svg)](https://doi.org/10.5281/zenodo.17862365)
+
 
 
 # MealSlot — MVP Scaffolding
@@ -22,7 +23,7 @@ MealSlot helps people decide what to eat using a slot-machine UI. Categories bec
 
 Mealslot is meant to help anyone looking to expand their culinary horizons. Whether they are an adventurous eater looking for new experiences, a beginner trying to expand their pallate, or a home cook working on their skills, MealSlot can help them discover and explore new dishes.
 
-## Demo
+## Old Demo
 
 https://github.com/user-attachments/assets/79e14304-0232-4f44-b30f-979cc4b544a5
 
