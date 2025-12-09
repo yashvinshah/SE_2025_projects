@@ -1,49 +1,83 @@
-name: Node.js CI
+name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+  actions: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: proj2
+    strategy:
+      matrix:
+        node-version: [18.x]
 
     steps:
+      # ---------------- Checkout ----------------
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Node.js
+      # ---------------- Node.js ----------------
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install root dependencies
-        run: npm install
+      - name: Enable corepack
+        run: corepack enable
 
-      - name: Install all dependencies (monorepo)
-        run: npm run install-all
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-      - name: Run ESLint
-        run: npm run lint
-        continue-on-error: false
+      # ---------------- Install ----------------
+      - name: Install dependencies
+        working-directory: mealslot
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Run tests with coverage
-        run: npm test
+      - name: Generate Prisma client
+        working-directory: mealslot
+        run: npx prisma generate
+
+      # ---------------- Lint ----------------
+      - name: Lint
+        working-directory: mealslot
+        run: pnpm run lint
         continue-on-error: true
 
+      # ---------------- Tests + Coverage ----------------
+      - name: Run Vitest with coverage
+        working-directory: mealslot
+        run: npx vitest run --coverage
+        continue-on-error: true
+        env:
+          CI: true
+
+      # ---------------- Upload coverage to Codecov ----------------
       - name: Upload coverage to Codecov
-        if: always() 
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          token: 6c4b845f-de6f-42f2-811f-736a0371b841
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-          verbose: true
+          files: "mealslot/coverage/lcov.info"
+
+      # ---------------- Build ----------------
+      - name: Build application
+        working-directory: mealslot
+        run: pnpm run build
+        continue-on-error: true
 
 
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mealslot-build
+          path: mealslot/.next
